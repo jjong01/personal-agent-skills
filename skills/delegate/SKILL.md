@@ -55,7 +55,8 @@ Claude는 **준비도 점검 결과 판단 → 모델 선택 → 지시문 작�
    - Gemini 공용 5시간 20% 미만 → 하·중 작업을 Argon으로 넘길지, 초기화 시각까지 기다릴지 사용자에게 묻는다.
    - Gemini 공용 주간 20% 미만 → 사용자에게 알리고 난이도 상만 위임한다.
    - Argon 주간 20% 미만 → 난이도 상은 `gemini-4-hydrogen-high`로 한다.
-   - Claude·GPT 계열 agy 모델은 쓰지 않는다(Claude 몫과 겹침).
+   - **한도 소진 시 대체 순서**(남은 양 5% 미만이면 소진으로 봄): Gemini 공용 → Argon(`gemini-4-argon-medium`) → agy의 Claude·GPT 묶음(`claude-sonnet-5-5-medium`). Claude·GPT 묶음은 Antigravity 구독 한도라 Claude Code 사용량과 별개이며, Gemini 묶음이 모두 소진됐을 때만 쓴다.
+   - **모든 묶음 소진** → 위임하지 않고 멈춘다. 초기화 시각을 알리고 "초기화까지 대기 / Claude가 직접 구현" 중 사용자 선택을 받는다(직접 구현은 사용자 승인 시에만).
 5. 고른 모델·난이도·근거가 된 남은 한도를 한 줄로 알린다.
 6. 매핑을 바꿀 때는 `~/agent/notes/agy-model-log.md` 기록(8단계)을 근거로 한다. 같은 모델·난이도에서 재작업이 2회 이상 쌓이면 한 단계 높은 모델을 제안한다.
 
@@ -103,6 +104,7 @@ S=<scratchpad>; ~/.claude/skills/delegate/run-agy.sh <저장소> <모델> $S/agy
 
 - 몇 줄 고치면 되는 문제 → Claude가 직접 고친다.
 - 여러 곳이 틀렸거나 시험 실패가 남음 → 지적 사항만 적은 짧은 지시문으로 재위임(같은 모델 1회, 그다음 한 단계 높은 모델 1회: flash-medium → flash-high → argon-medium → hydrogen-high). 두 번 넘게 실패하면 멈추고 사용자에게 보고한다.
+- 실행 중 한도가 소진돼 멈춘 경우(로그 끝 `AGY_USAGE`에 5% 미만 묶음) → 바뀐 파일은 그대로 두고, 2단계 대체 순서의 다음 묶음 모델로 "이미 바뀐 파일을 이어서 완성"하는 지시문을 다시 위임한다.
 
 ## 7. 브라우저 확인 (`--browser` 또는 사용자가 화면 확인 요청 시)
 

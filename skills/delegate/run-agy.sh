@@ -65,5 +65,9 @@ echo "AGY_EXIT $code" >> "$LOG"
 if grep -q 'no output produced' "$LOG"; then
   latest="$(ls -t "$HOME/.gemini/antigravity-cli/log/"*.log 2>/dev/null | head -1)"
   echo "AGY_DENIED: allow 목록 밖 명령으로 중단됨. CLI 로그: $latest" >> "$LOG"
+elif ! grep -q '=== REPORT ===' "$LOG"; then
+  # 보고 없이 끝나면 한도 소진 여부 판단용 사용량을 덧붙임
+  echo "AGY_USAGE:" >> "$LOG"
+  agy -p "/usage" 2>&1 | head -8 >> "$LOG"
 fi
 exit $code
