@@ -1,0 +1,4 @@
+# Windows에서 clone해도 Git Bash가 셸 스크립트를 실행할 수 있도록 LF 고정
+*.sh text eol=lf
+*.md text eol=lf
+*.ps1 text eol=crlf

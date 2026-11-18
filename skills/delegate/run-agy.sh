@@ -11,7 +11,11 @@ set -uo pipefail
 REPO="$1"; MODEL="$2"; PROMPT="$3"; LOG="$4"; shift 4
 GLOBAL="$HOME/.gemini/antigravity-cli/settings.json"
 
-SETTINGS="$(python3 -I - "$REPO" "$GLOBAL" "$@" <<'EOF'
+# Windows(Git Bash)는 python3 대신 python만 있는 경우가 많음
+PY="$(command -v python3 || command -v python || true)"
+[[ -z "$PY" ]] && { echo "python3(또는 python)이 필요함" >&2; exit 2; }
+
+SETTINGS="$("$PY" -I - "$REPO" "$GLOBAL" "$@" <<'EOF'
 import json, os, sys
 repo, glob_path, extra = os.path.realpath(sys.argv[1]), sys.argv[2], sys.argv[3:]
 perm = {}
