@@ -17,6 +17,10 @@ for target in "${TARGETS[@]}"; do
   for skill in "$SRC"/*/; do
     name="$(basename "$skill")"
     [[ -f "$skill/SKILL.md" ]] || continue
+    # .claude-only 표시가 있는 스킬은 Claude Code에만 연결함
+    if [[ -f "$skill/.claude-only" && "$target" != "$HOME/.claude/skills" ]]; then
+      continue
+    fi
     dest="$target/$name"
     # 이미 저장소를 가리키는 링크면 건너뜀
     if [[ -L "$dest" && "$(readlink "$dest")" == "${skill%/}" ]]; then
