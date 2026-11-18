@@ -37,10 +37,11 @@ All responses must be in Korean (except for development terminology).
 
 ## Delegation (Claude Code only; Antigravity ignores this section)
 
-- Implement the stages of a finalized plan document (e.g., HS1–HS5, WS1–WS4, M1–M3) via the `/delegate` skill without asking the user first.
-- Also use `/delegate` without asking for many mechanical fixes with a known cause, and for browser/screen verification of finished work.
+- Implement the stages of a finalized plan document (e.g., HS1–HS5, WS1–WS4, M1–M3) without asking the user first: run the `stage-runner` subagent (it follows the `/delegate` procedure in its own context) and read only its returned report. Keep the main session for planning, user questions and commits.
+- When stage-runner returns `QUESTIONS`, ask the user, then rerun stage-runner with the answers as user decisions. When it returns `STAGE REPORT`, summarize it and get approval before committing.
+- Also use `/delegate` (via stage-runner) without asking for many mechanical fixes with a known cause, and for browser/screen verification of finished work.
 - Exclusions (do these directly): investigation or design decisions, unclear root-cause debugging, changes of 1–3 lines, git/DB/deploy/server work, the final regression-test stage.
-- Inside `/delegate`, still ask the user for policy decisions from the readiness check, and get approval before committing.
+- Use `/handoff` only when the feature changes or the main context exceeds ~150k tokens.
 
 ## Environment
 

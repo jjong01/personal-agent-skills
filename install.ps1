@@ -100,7 +100,15 @@ Get-ChildItem -LiteralPath (Join-Path $Repo 'skills') -Directory | ForEach-Objec
     }
 }
 
-Write-Host '## 4. 도구 확인'
+Write-Host '## 4. 서브에이전트 (Claude Code 전용)'
+$agentsDir = Join-Path $Repo 'agents'
+if (Test-Path -LiteralPath $agentsDir) {
+    Get-ChildItem -LiteralPath $agentsDir -Filter '*.md' -File | ForEach-Object {
+        New-Link $_.FullName "$H\.claude\agents\$($_.Name)"
+    }
+}
+
+Write-Host '## 5. 도구 확인'
 $hints = [ordered]@{
     'claude' = 'https://docs.claude.com/claude-code 설치 안내 참고'
     'agy'    = 'Antigravity CLI 설치 안내 참고'

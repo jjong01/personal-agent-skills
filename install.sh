@@ -49,7 +49,13 @@ for skill in "$REPO_DIR"/skills/*/; do
   [[ -f "$skill/.claude-only" ]] || link "$skill" "$HOME/.gemini/config/skills/$name"
 done
 
-echo "## 4. 도구 확인"
+echo "## 4. 서브에이전트 (Claude Code 전용)"
+for agent in "$REPO_DIR"/agents/*.md; do
+  [[ -f "$agent" ]] || continue
+  link "$agent" "$HOME/.claude/agents/$(basename "$agent")"
+done
+
+echo "## 5. 도구 확인"
 missing=()
 for t in claude agy node git lsd bat rg fd zoxide delta; do
   command -v "$t" >/dev/null 2>&1 || missing+=("$t")
