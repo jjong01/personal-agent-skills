@@ -5,11 +5,21 @@
 # 사용: run-agy.sh <저장소> <모델> <지시문 파일> <로그 파일> [추가 allow 규칙...]
 #   예: run-agy.sh ~/dev/app gemini-3.8-flash-high p.txt run.log 'command(mvn test)'
 # 규칙은 접두어 일치: command(mvn test)는 'mvn test -q'도 허용함. '*'를 붙이면 일치하지 않음
+# 환경 변수 AGY_MODE: accept-edits(기본, 파일 수정 자동 승인) | plan(읽기 전용 점검)
 set -uo pipefail
 
 [[ $# -lt 4 ]] && { echo "usage: $0 <repo> <model> <prompt-file> <log-file> [allow...]" >&2; exit 2; }
 REPO="$1"; MODEL="$2"; PROMPT="$3"; LOG="$4"; shift 4
 GLOBAL="$HOME/.gemini/antigravity-cli/settings.json"
+MODE="${AGY_MODE:-accept-edits}"
+case "$MODE" in accept-edits|plan) ;; *) echo "AGY_MODE는 accept-edits 또는 plan" >&2; exit 2 ;; esac
+
+# 모델 이름 검증(잘못된 이름은 agy가 즉시 실패하므로 실행 전에 걸러 냄)
+if ! agy models 2>/dev/null | awk '{print $1}' | grep -qx "$MODEL"; then
+  echo "알 수 없는 모델: $MODEL. 사용 가능 목록:" >&2
+  agy models 2>/dev/null | grep -v '^Fetching' >&2
+  exit 2
+fi
 
 # Windows(Git Bash)는 python3 대신 python만 있는 경우가 많음
 PY="$(command -v python3 || command -v python || true)"
@@ -48,7 +58,7 @@ EOF
 )"
 
 cd "$REPO" || exit 2
-agy --mode accept-edits --model "$MODEL" --settings "$SETTINGS" -p "$(cat "$PROMPT")" > "$LOG" 2>&1
+agy --mode "$MODE" --model "$MODEL" --settings "$SETTINGS" -p "$(cat "$PROMPT")" > "$LOG" 2>&1
 code=$?
 echo "AGY_EXIT $code" >> "$LOG"
 # 권한 거부로 보고 없이 끝난 경우 원인 명령을 로그에 덧붙임
