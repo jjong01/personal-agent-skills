@@ -10,6 +10,7 @@ Claude Code와 Antigravity(agy)에서 함께 쓰는 개인 에이전트 공통 �
 | [`commit`](skills/commit/SKILL.md) | 변경 내용을 분석해 저장소 형식에 맞는 커밋 메시지 생성 후 확인을 거쳐 커밋 (git·SVN) |
 | [`handoff`](skills/handoff/SKILL.md) | 진행 상황을 인계 메모로 저장하고 새 대화에서 이어서 작업 |
 | [`delegate`](skills/delegate/SKILL.md) | 구현·시험·브라우저 확인을 agy에 맡기고 결과 요약만 검토 (Claude Code 전용) |
+| [`image-edit`](skills/image-edit/SKILL.md) | 이미지 파일 작업은 직접, 내용 편집은 agy 이미지 생성으로 처리 후 원본 규격 맞춤·백업·교체 (Claude Code 전용, Python PIL 필요) |
 
 스킬 폴더에 `.claude-only` 파일이 있으면 Claude Code에만 연결함.
 
