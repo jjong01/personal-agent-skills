@@ -35,6 +35,13 @@ All responses must be in Korean (except for development terminology).
 6. [Code Output] 코드 수정이나 제안 시, 파일 전체를 다시 출력하지 않고 변경이 필요한 부분(Diff)이나 추가할 핵심 로직만 간결하게 제공한다.
 7. [Simplicity & Clarity] 모든 답변은 간결하게 압축하여 작성하되, 핵심 내용을 직관적이고 이해하기 쉽게 전달한다. -->
 
+## Delegation (Claude Code only; Antigravity ignores this section)
+
+- Implement the stages of a finalized plan document (e.g., HS1–HS5, WS1–WS4, M1–M3) via the `/delegate` skill without asking the user first.
+- Also use `/delegate` without asking for many mechanical fixes with a known cause, and for browser/screen verification of finished work.
+- Exclusions (do these directly): investigation or design decisions, unclear root-cause debugging, changes of 1–3 lines, git/DB/deploy/server work, the final regression-test stage.
+- Inside `/delegate`, still ask the user for policy decisions from the readiness check, and get approval before committing.
+
 ## Environment
 
 - Workspace layout:
