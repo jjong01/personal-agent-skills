@@ -124,7 +124,24 @@ if (Test-Path -LiteralPath $agentsDir) {
     }
 }
 
-Write-Host '## 5. 도구 확인'
+Write-Host '## 5. 설정 병합 (저장소 settings\ → 기기 설정, 기존 값 유지)'
+$py = Get-Command python -ErrorAction SilentlyContinue
+if (-not $py) { $py = Get-Command python3 -ErrorAction SilentlyContinue }
+if (-not $py) { Write-Host 'python 없음: 설정 병합 건너뜀' }
+else {
+    $merge = Join-Path $Repo 'lib\merge-settings.py'
+    $pairs = @(
+        @((Join-Path $Repo 'settings\claude.json'), "$H\.claude\settings.json"),
+        @((Join-Path $Repo 'settings\agy.json'), "$H\.gemini\antigravity-cli\settings.json")
+    )
+    foreach ($p in $pairs) {
+        $a = @('-I', $merge, $p[0], $p[1])
+        if ($DryRun) { $a += '--dry-run' }
+        & $py.Source @a
+    }
+}
+
+Write-Host '## 6. 도구 확인'
 $hints = [ordered]@{
     'claude' = 'https://docs.claude.com/claude-code 설치 안내 참고'
     'agy'    = 'Antigravity CLI 설치 안내 참고'
@@ -143,3 +160,28 @@ if ($missing.Count -gt 0) {
 } else {
     Write-Host 'ok      필요한 도구 모두 있음'
 }
+
+Write-Host '## 7. 점검'
+$broken = @()
+$checks = @("$H\agent\AGENTS.md", "$H\agent\lib", "$H\.claude\CLAUDE.md", "$H\.gemini\GEMINI.md")
+foreach ($dir in @("$H\.claude\skills", "$H\.gemini\config\skills", "$H\.claude\agents")) {
+    if (Test-Path -LiteralPath $dir) { $checks += @(Get-ChildItem -LiteralPath $dir -Force | ForEach-Object { $_.FullName }) }
+}
+foreach ($c in $checks) {
+    $t = Get-LinkTarget $c
+    if ($t -and -not (Test-Path -LiteralPath $t)) { $broken += $c }
+}
+if ($broken.Count -gt 0) { $broken | ForEach-Object { Write-Host "깨진 링크: $_" } } else { Write-Host 'ok      링크 정상' }
+if (Get-Command agy -ErrorAction SilentlyContinue) {
+    $m = (& agy models 2>$null) -join "`n"
+    if ($m -match 'gemini') { Write-Host 'ok      agy 모델 목록 조회됨(로그인 상태)' }
+    else { Write-Host '확인 필요: agy models 실패. agy를 한 번 실행해 로그인' }
+} else { Write-Host '확인 필요: agy 없음. delegate·offload·image-edit는 agy가 있어야 위임함' }
+if ($py) {
+    & $py.Source -c 'import PIL' 2>$null
+    if ($LASTEXITCODE -eq 0) { Write-Host 'ok      python·PIL' } else { Write-Host '참고: PIL 없음(image-edit만 필요): pip install pillow' }
+} else { Write-Host '확인 필요: python 없음(run-agy.sh·설정 병합에 필요)' }
+$plug = Join-Path $H '.claude\plugins'
+if ((Test-Path -LiteralPath $plug) -and (Get-ChildItem -LiteralPath $plug -Recurse -Depth 3 -Directory -Filter 'context-mode*' -ErrorAction SilentlyContinue)) {
+    Write-Host 'ok      context-mode 플러그인'
+} else { Write-Host '확인 필요: Claude Code에서 /plugin install context-mode@context-mode 실행' }

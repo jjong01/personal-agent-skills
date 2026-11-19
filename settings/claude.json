@@ -1,0 +1,61 @@
+{
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
+  "model": "opus",
+  "autoCompactWindow": 160000,
+  "permissions": {
+    "allow": [
+      "Bash(svn status *)",
+      "Bash(svn status)",
+      "Bash(svn diff *)",
+      "Bash(svn diff)",
+      "Bash(svn log *)",
+      "Bash(svn info *)",
+      "Bash(svn info)",
+      "Bash(svn propget *)",
+      "Bash(svn cat *)",
+      "Bash(svn list *)",
+      "Bash(svn ls *)",
+      "Bash(brew info *)",
+      "Bash(brew list *)",
+      "Bash(brew list)",
+      "Bash(launchctl print *)",
+      "Bash(docker info)",
+      "mcp__Claude_Browser__find",
+      "mcp__Claude_Browser__read_network_requests",
+      "mcp__Claude_Browser__read_page",
+      "mcp__Claude_Browser__read_console_messages",
+      "mcp__Claude_Browser__tabs_context",
+      "mcp__Claude_Browser__preview_logs",
+      "mcp__Claude_Browser__get_page_text",
+      "mcp__Claude_Browser__preview_list"
+    ],
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.local)",
+      "Read(**/.env.*.local)",
+      "Read(**/.env.prod*)",
+      "Read(**/.env.staging)",
+      "Bash(cat *.env*)",
+      "Bash(bat *.env*)",
+      "Bash(head *.env*)",
+      "Bash(tail *.env*)",
+      "Bash(less *.env*)"
+    ]
+  },
+  "extraKnownMarketplaces": {
+    "context-mode": {
+      "source": {
+        "source": "github",
+        "repo": "mksglu/context-mode",
+        "ref": "v2.2.1"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "context-mode@context-mode": true
+  }
+}

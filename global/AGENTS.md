@@ -44,7 +44,7 @@ All responses must be in Korean (except for development terminology).
 - Non-development work that needs a lot of reading (web research, comparing sources, summarizing long documents or many files, translation, cleanup plans): use `/offload` without asking when `agy` is installed. Small tasks and system changes stay with Claude.
 - Other multi-step work (editing several files, writing and testing scripts, waiting on agy): run it in a background subagent (model sonnet; pass the needed context explicitly) so the main session can keep answering the user's questions meanwhile. One- or two-command tasks, destructive actions needing confirmation (format, delete), and commits/pushes stay in the main session. The subagent never commits or pushes and returns policy questions instead of deciding; the main session does not edit files the subagent is working on.
 - Exclusions (do these directly): investigation or design decisions, unclear root-cause debugging, changes of 1–3 lines, git/DB/deploy/server work, the final regression-test stage.
-- Use `/handoff` only when the feature changes or the main context exceeds ~150k tokens.
+- Long sessions: auto-compact (`autoCompactWindow` 160k) summarizes the context automatically; do not suggest `/handoff` because of context size. Use `/handoff` only when pausing work until a later day or moving to another PC, and `/clear` when the feature changes (plan documents and memory keep the record).
 
 ## Environment
 

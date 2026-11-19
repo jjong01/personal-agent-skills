@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "deny": [
+      "command(regex:(cat|bat|head|tail|less|more|grep|sed|awk) .*\\.env(\\s|$|\\.).*)"
+    ]
+  }
+}

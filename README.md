@@ -2,7 +2,10 @@
 
 Claude Code와 Antigravity(agy)에서 함께 쓰는 개인 에이전트 공통 규칙과 스킬 모음.
 
+전체 구조·새 PC 설정·기기별 준비 사항은 [사용 가이드](docs/GUIDE.md) 참고.
+
 - `global/AGENTS.md`: 두 도구 공통 전역 규칙
+- `settings/`: 기기 설정에 병합하는 공용 설정(`claude.json`: 자동 요약 160k·권한·context-mode, `agy.json`: `.env` 차단)
 - `skills/<분류>/<이름>/`: 사용자 스킬. 분류는 저장소 정리용이며 설치 시 도구별 `skills/<이름>`으로 평평하게 연결함(이름 중복 금지)
 - `lib/`: 스킬 공용 스크립트(`run-agy.sh`: agy 비대화 실행 래퍼). 설치 후 `~/agent/lib`
 
@@ -52,7 +55,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 ~/.gemini/config/skills/<이름>   → 저장소 skills/<분류>/<이름> (.claude-only 제외)
 ```
 
-마지막에 필요한 도구(claude, agy, node, lsd, bat, rg, fd, zoxide, delta)가 없으면 설치 명령을 안내함. Claude Code 플러그인(context-mode 등)·권한 설정은 기기별로 따로 설정함.
+이어서 `settings/`를 `~/.claude/settings.json`·`~/.gemini/antigravity-cli/settings.json`에 병합함(기존 값 유지, 목록은 없는 항목만 추가, 쓰기 전 백업). 필요한 도구(claude, agy, node, lsd, bat, rg, fd, zoxide, delta)가 없으면 설치 명령을 안내하고, 마지막 "점검"에서 깨진 링크·agy 로그인·python·PIL·context-mode 플러그인을 확인함. 플러그인은 Claude Code에서 `/plugin install context-mode@context-mode`로 설치함.
 
 ## 스킬 추가·수정
 

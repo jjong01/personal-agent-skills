@@ -69,7 +69,17 @@ for agent in "$REPO_DIR"/agents/*.md; do
   link "$agent" "$HOME/.claude/agents/$(basename "$agent")"
 done
 
-echo "## 5. 도구 확인"
+echo "## 5. 설정 병합 (저장소 settings/ → 기기 설정, 기존 값 유지)"
+PY="$(command -v python3 || command -v python || true)"
+if [[ -z "$PY" ]]; then
+  echo "python 없음: 설정 병합 건너뜀"
+else
+  DRYFLAG=(); (( DRY )) && DRYFLAG=(--dry-run)
+  "$PY" -I "$REPO_DIR/lib/merge-settings.py" "$REPO_DIR/settings/claude.json" "$HOME/.claude/settings.json" "${DRYFLAG[@]+"${DRYFLAG[@]}"}"
+  "$PY" -I "$REPO_DIR/lib/merge-settings.py" "$REPO_DIR/settings/agy.json" "$HOME/.gemini/antigravity-cli/settings.json" "${DRYFLAG[@]+"${DRYFLAG[@]}"}"
+fi
+
+echo "## 6. 도구 확인"
 missing=()
 for t in claude agy node git lsd bat rg fd zoxide delta; do
   command -v "$t" >/dev/null 2>&1 || missing+=("$t")
@@ -81,4 +91,27 @@ if (( ${#missing[@]} )); then
   echo "                 brew install --cask antigravity-cli   # agy"
 else
   echo "ok      필요한 도구 모두 있음"
+fi
+
+echo "## 7. 점검"
+warn=0
+for l in "$HOME/agent/AGENTS.md" "$HOME/agent/lib" "$HOME/.claude/CLAUDE.md" "$HOME/.gemini/GEMINI.md" "$HOME"/.claude/skills/* "$HOME"/.gemini/config/skills/* "$HOME"/.claude/agents/*.md; do
+  [[ -L "$l" && ! -e "$l" ]] && { echo "깨진 링크: $l"; warn=1; }
+done
+(( warn )) || echo "ok      링크 정상"
+if command -v agy >/dev/null 2>&1; then
+  if agy models 2>/dev/null | grep -q gemini; then echo "ok      agy 모델 목록 조회됨(로그인 상태)"
+  else echo "확인 필요: agy models 실패. agy를 한 번 실행해 로그인"; fi
+else
+  echo "확인 필요: agy 없음. delegate·offload·image-edit는 agy가 있어야 위임함"
+fi
+if [[ -n "$PY" ]]; then
+  "$PY" -c "import PIL" 2>/dev/null && echo "ok      python·PIL" || echo "참고: PIL 없음(image-edit만 필요): pip install pillow"
+else
+  echo "확인 필요: python 없음(run-agy.sh·설정 병합에 필요)"
+fi
+if [[ -d "$HOME/.claude/plugins" ]] && find "$HOME/.claude/plugins" -maxdepth 4 -type d -name 'context-mode*' 2>/dev/null | grep -q .; then
+  echo "ok      context-mode 플러그인"
+else
+  echo "확인 필요: Claude Code에서 /plugin install context-mode@context-mode 실행"
 fi
