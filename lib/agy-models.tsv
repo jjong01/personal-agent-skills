@@ -1,0 +1,24 @@
+id	용도	메모
+gemini-3.8-flash-low	평가중	미사용
+gemini-3.8-flash-medium	구현-하	조사·이미지·브라우저 확인 기본
+gemini-3.8-flash-high	구현-중	준비도 점검 겸용
+gemini-4-argon-low	평가중	
+gemini-4-argon-medium	구현-상	조사(판단 어려운 분석)·이미지 어려운 경우 겸용, 대체 순서 2번
+gemini-4-argon-high	평가중	
+gemini-4-hydrogen-low	평가중	
+gemini-4-hydrogen-medium	평가중	2026-11-19 1회: 통과 29s, 시험 무변경, 보고 정상(flash-medium 85s). 사용량 변화 미관측. 추가 작업 평가 필요
+gemini-4-hydrogen-high	대체	Argon 주간 한도 부족 시 난이도 상
+gemini-4-hydrogen-xhigh	평가중	
+gemini-4-neon-low	평가중	
+gemini-4-neon-medium	평가중	2026-11-19 1회: 통과 36s, Gemini 공용 5시간 -1%. 추가 작업 평가 필요
+gemini-4-neon-high	평가중	
+gemini-4-neon-xhigh	평가중	
+gemini-pro-orchestrator-neon	사용안함	2026-11-19 1회: 통과 75s, Gemini 공용 5시간 -1%. 단일 단계 위임에서 이점 없음
+gemini-pro-orchestrator-g1-pro	사용안함	neon 오케스트레이터가 이점 없어 미평가
+claude-sonnet-5-5-low	사용안함	
+claude-sonnet-5-5-medium	대체	Gemini 묶음 소진 시 최후 대체(Claude·GPT 묶음)
+claude-sonnet-5-5-high	사용안함	
+claude-opus-5-5-low	사용안함	본 세션과 역할 중복
+claude-opus-5-5-medium	사용안함	본 세션과 역할 중복
+claude-opus-5-5-high	사용안함	본 세션과 역할 중복
+gpt-oss-120b-medium	평가중	

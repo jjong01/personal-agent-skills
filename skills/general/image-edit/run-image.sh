@@ -35,6 +35,7 @@ EOF
 
 LOG="$WORK/agy.log"
 "$HOME/agent/lib/run-agy.sh" "$(dirname "$REF")" "$MODEL" "$WORK/prompt.txt" "$LOG" >/dev/null 2>&1
+grep -h '^AGY_NEW_MODELS' "$LOG" >&2
 grep -q 'AGY_DENIED' "$LOG" && echo "참고: agy가 허용 밖 명령을 시도해 중간에 멈춤(생성 결과가 있으면 계속 진행)" >&2
 
 "$PY" -I - "$MARK" "$REF" "$OUT" "$KEEP" <<'EOF'

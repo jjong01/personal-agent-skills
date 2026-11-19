@@ -7,6 +7,7 @@
 # 규칙은 접두어 일치: command(mvn test)는 'mvn test -q'도 허용함. '*'를 붙이면 일치하지 않음
 # 환경 변수 AGY_MODE: accept-edits(기본, 파일 수정 자동 승인) | plan(읽기 전용 점검)
 #          AGY_ADD_DIRS: 작업 공간에 더할 폴더(':' 구분), AGY_REPORT_MARK: 정상 종료 판단 표시(기본 '=== REPORT ===')
+# 로그 끝 AGY_NEW_MODELS: lib/agy-models.tsv에 없는 신규 모델 id 목록
 # 위치: 저장소 lib/, 설치 후 ~/agent/lib/run-agy.sh 로 호출함
 set -uo pipefail
 
@@ -19,10 +20,11 @@ GLOBAL="$HOME/.gemini/antigravity-cli/settings.json"
 MODE="${AGY_MODE:-accept-edits}"
 case "$MODE" in accept-edits|plan) ;; *) echo "AGY_MODE는 accept-edits 또는 plan" >&2; exit 2 ;; esac
 
-# 모델 이름 검증(잘못된 이름은 agy가 즉시 실패하므로 실행 전에 걸러 냄)
-if ! agy models 2>/dev/null | awk '{print $1}' | grep -qx "$MODEL"; then
+# 모델 이름 검증(잘못된 이름은 agy가 즉시 실패하므로 실행 전에 걸러 냄). 목록은 신규 모델 감지에 재사용함
+MODELS_OUT="$(agy models 2>/dev/null | grep -v '^Fetching')"
+if ! printf '%s\n' "$MODELS_OUT" | awk '{print $1}' | grep -qx "$MODEL"; then
   echo "알 수 없는 모델: $MODEL. 사용 가능 목록:" >&2
-  agy models 2>/dev/null | grep -v '^Fetching' >&2
+  printf '%s\n' "$MODELS_OUT" >&2
   exit 2
 fi
 
@@ -79,5 +81,12 @@ elif ! grep -qF "${AGY_REPORT_MARK:-=== REPORT ===}" "$LOG"; then
   # 보고 없이 끝나면 한도 소진 여부 판단용 사용량을 덧붙임
   echo "AGY_USAGE:" >> "$LOG"
   agy -p "/usage" 2>&1 | head -8 >> "$LOG"
+fi
+# agy-models.tsv에 없는 모델이 목록에 생기면 로그 끝에 알림(모델 자동 전환은 하지 않음)
+SELF_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+if [[ -f "$SELF_DIR/agy-models.tsv" ]]; then
+  NEW_MODELS="$(printf '%s\n' "$MODELS_OUT" | awk '{print $1}' | grep -v '^$' \
+    | grep -vxFf <(cut -f1 "$SELF_DIR/agy-models.tsv") | tr '\n' ' ' | sed 's/ $//')"
+  [[ -n "$NEW_MODELS" ]] && echo "AGY_NEW_MODELS: $NEW_MODELS" >> "$LOG"
 fi
 exit $code

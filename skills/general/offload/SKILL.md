@@ -45,7 +45,7 @@ S=<scratchpad>; OFFLOAD_DIRS=<함께 읽을 폴더(':' 구분, 선택)> \
 - 결과 파일: 사용자가 보관할 결과는 `~/agent/notes/<YYYYMMDD>-<주제>.md`, 일회성은 scratchpad. 같은 이름이 있으면 거부되므로 새 이름을 쓴다.
 - agy는 plan 모드(읽기 전용)로 실행되어 파일을 만들거나 고치지 못한다. 결과 파일은 스크립트가 출력에서 잘라 저장한다.
 - 오래 걸릴 수 있으므로 Bash `run_in_background: true`로 실행하고 완료 알림을 기다린다(웹 조사 1건 약 30초).
-- 출력의 요약 몇 줄과 마지막 줄 `OFFLOAD_RESULT {...}`만 읽는다. `ok: false`면 `agy` 항목(AGY_DENIED·AGY_USAGE)으로 원인을 보고 지시를 고쳐 1회 재실행한다.
+- 출력의 요약 몇 줄과 마지막 줄 `OFFLOAD_RESULT {...}`만 읽는다. JSON에 `new_models`가 있으면 사용자에게 한 줄로 알리고 평가 여부를 묻는다(모델은 자동으로 바꾸지 않음, 절차는 delegate 스킬 "새 모델 평가 절차"). `ok: false`면 `agy` 항목(AGY_DENIED·AGY_USAGE)으로 원인을 보고 지시를 고쳐 1회 재실행한다.
 
 ## 4. 결과 검토
 

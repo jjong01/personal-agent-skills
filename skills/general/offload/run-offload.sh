@@ -55,6 +55,10 @@ os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
 with open(out, "w", encoding="utf-8") as f:
     f.write(res + "\n\n## 출처\n\n" + (src or "(없음)") + "\n")
 print(summ)
-print("OFFLOAD_RESULT " + json.dumps({"ok": True, "out": os.path.abspath(out), "chars": len(res),
-      "sources": len([l for l in src.splitlines() if l.strip()]), "model": model}, ensure_ascii=False))
+nm = re.search(r"^AGY_NEW_MODELS: (.*)$", t, re.M)
+r = {"ok": True, "out": os.path.abspath(out), "chars": len(res),
+     "sources": len([l for l in src.splitlines() if l.strip()]), "model": model}
+if nm:
+    r["new_models"] = nm.group(1)
+print("OFFLOAD_RESULT " + json.dumps(r, ensure_ascii=False))
 PYEOF
