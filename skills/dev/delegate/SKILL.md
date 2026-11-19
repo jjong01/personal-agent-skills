@@ -76,22 +76,22 @@ Claude는 **준비도 점검 결과 판단 → 모델 선택 → 지시문 작�
 반드시 [run-agy.sh](../../../lib/run-agy.sh)(설치 후 `~/agent/lib/run-agy.sh`)로 실행한다(`agy`를 직접 부르지 않음, `--dangerously-skip-permissions` 금지). 래퍼가 처리하는 것:
 
 - `--settings`는 전역 권한을 **덮어쓰므로** 전역 deny, 기본 deny(git 상태 변경·DB·ssh·rm -rf), 저장소 `.env` 읽기 차단을 매번 합쳐 넘긴다.
-- 읽기 전용 명령(ls, cat, grep, git status/diff/log 등)은 기본 허용한다. 비대화 모드에서는 allow 목록 밖 명령을 하나라도 쓰면 **보고 없이 종료**되기 때문이다.
+- 읽기 전용 명령(ls, cat, grep, sort, diff, git status/diff/log/grep/ls-files/branch 등)은 기본 허용한다. 비대화 모드에서는 allow 목록 밖 명령을 하나라도 쓰면 **보고 없이 종료**되기 때문이다.
 
-추가 허용은 프로젝트의 시험·빌드 명령만 인자로 넘긴다. 규칙은 **접두어 일치**다(`command(mvn test)`는 `mvn test -q`도 허용). `*`를 붙이면 일치하지 않는다.
+추가 허용은 프로젝트의 시험·빌드 명령만 인자로 넘긴다. 규칙은 **공백 단위 접두어 일치**다: `command(mvn test)`는 `mvn test -q`는 허용하지만 `mvn test-compile`·`mvn -q test`·`mvn -f backend/pom.xml test`는 허용하지 않는다. 옵션 위치·하위 목표별로 따로 넣고, 지시문의 시험 명령도 넣은 형태 그대로 적는다. `*`를 붙이면 일치하지 않는다.
 
 | 프로젝트 | 추가 allow 예 |
 |---|---|
-| Maven | `command(mvn test)`, `command(mvn -q test)`, `command(mvn clean test)`, `command(mvn compile)` |
-| Gradle | `command(./gradlew test)`, `command(./gradlew assemble)`, `command(./gradlew lint)` |
+| Maven | `compile`·`test-compile`·`test`를 함께 넣는다. 예: `command(mvn compile)`, `command(mvn test-compile)`, `command(mvn test)`, `command(mvn -q compile)`, `command(mvn -q test-compile)`, `command(mvn -q test)`. pom이 하위 폴더면 `command(mvn -f backend/pom.xml compile)`, `command(mvn -f backend/pom.xml test-compile)`, `command(mvn -f backend/pom.xml test)`, `command(mvn -q -f backend/pom.xml test)`. `./mvnw`도 같은 방식 |
+| Gradle | `command(./gradlew test)`, `command(./gradlew compileJava)`, `command(./gradlew compileTestJava)`, `command(./gradlew assemble)`, `command(./gradlew lint)` |
 | npm | `command(npm test)`, `command(npm run build)`, `command(npm run lint)`, `command(npx eslint)` |
 
 ```sh
 S=<scratchpad>; ~/agent/lib/run-agy.sh <저장소> <모델> $S/agy_<작업>_prompt.txt $S/agy_<작업>.log \
-  'command(mvn test)' 'command(mvn -q test)'
+  'command(mvn compile)' 'command(mvn test-compile)' 'command(mvn test)' 'command(mvn -q test)'
 ```
 
-- 로그 끝에 `AGY_DENIED`가 있으면 목록 밖 명령으로 멈춘 것이다. 해당 CLI 로그에서 명령을 확인해 안전하면 allow에 추가해 다시 실행하고, 위험하면 지시문에서 그 작업을 빼거나 Claude가 처리한다.
+- 로그 끝에 `AGY_DENIED: <명령>`이 있으면 그 명령이 allow 목록 밖이라 거부된 것이다(래퍼가 agy 대화 기록에서 추출, `AGY_DENIED_LOG` 줄에 CLI 로그·대화 id). 보고가 없으면 그 지점에서 멈춘 것이다. 명령이 안전하면 그 형태 그대로 allow에 추가해 다시 실행하고, 위험하면 지시문에서 그 작업을 빼거나 Claude가 처리한다. `(명령 확인 불가)`면 `~/.gemini/antigravity-cli/brain/<대화 id>/.system_generated/logs/transcript_full.jsonl` 끝의 `CommandLine`을 본다.
 - Bash `run_in_background: true`로 실행한다. **완료 알림이 올 때까지 로그를 tail하거나 git status로 진행을 확인하지 않는다.**
 - 사용자에게는 모델, 범위, 로그 경로를 3줄 이내로 알린다.
 
@@ -100,7 +100,7 @@ S=<scratchpad>; ~/agent/lib/run-agy.sh <저장소> <모델> $S/agy_<작업>_prom
 1. 보고만 읽는다: `sed -n '/=== REPORT ===/,$p' $S/agy_<작업>.log | head -80`. 보고가 없으면 `tail -c 2000`만 본다.
 2. `git status --short`, `git diff --stat`.
 3. 위험 파일만 골라 해당 파일 diff를 본다: 권한·보안·결제, DB 마이그레이션, 설정, 삭제된 코드, 보고에 "불확실"로 적힌 곳. 전체 diff는 보지 않는다.
-4. 확인 시험 1회: 결과는 요약만 본다(예: `mvn -q test 2>&1 | grep -E 'Tests run:|FAIL|ERROR' | tail -20`, `npm run build 2>&1 | tail -15`).
+4. 확인 시험 1회: [run-logged.sh](../../../lib/run-logged.sh)로 실행해 종료 코드와 요약만 본다(전체 출력은 로그 파일). 예: `~/agent/lib/run-logged.sh $S/test.log mvn -q test`, `~/agent/lib/run-logged.sh $S/build.log npm run build`. 서브에이전트(stage-runner)에서는 context-mode 훅이 `mvn`·`mvnw`·`gradle`·`gradlew`·`sbt` 직접 실행을 막으므로(파일로 돌려도 막힘) 반드시 이 래퍼를 쓴다. 셸 구문이 필요하면 `run-logged.sh <로그> bash -c 'cd backend && mvn -q test'`.
 5. 금지 사항 위반 확인: 커밋 생성 여부(`git log -1`), 기존 시험 단언 변경 여부(`git diff --stat -- '*Test*' '*.test.*'`).
 6. 로그에 `AGY_NEW_MODELS: <id...>`가 있으면 사용자에게 한 줄로 알리고 평가 여부를 묻는다(모델은 자동으로 바꾸지 않음). 절차는 아래 "새 모델 평가 절차".
 

@@ -4,10 +4,11 @@
 # - 읽기 전용 명령을 기본 허용해 목록 밖 명령으로 실행이 중단되는 일을 줄임
 # 사용: run-agy.sh <저장소> <모델> <지시문 파일> <로그 파일> [추가 allow 규칙...]
 #   예: run-agy.sh ~/dev/app gemini-3.8-flash-high p.txt run.log 'command(mvn test)'
-# 규칙은 접두어 일치: command(mvn test)는 'mvn test -q'도 허용함. '*'를 붙이면 일치하지 않음
+# 규칙은 공백 단위 접두어 일치: command(mvn test)는 'mvn test -q'는 허용하나 'mvn test-compile'·'mvn -q test'는 허용하지 않음. '*'를 붙이면 일치하지 않음
 # 환경 변수 AGY_MODE: accept-edits(기본, 파일 수정 자동 승인) | plan(읽기 전용 점검)
 #          AGY_ADD_DIRS: 작업 공간에 더할 폴더(':' 구분), AGY_REPORT_MARK: 정상 종료 판단 표시(기본 '=== REPORT ===')
-# 로그 끝 AGY_NEW_MODELS: lib/agy-models.tsv에 없는 신규 모델 id 목록
+# 로그 끝 AGY_DENIED: <명령>: 권한 거부된 명령(agy-denied.py가 대화 transcript에서 추출)
+#        AGY_NEW_MODELS: lib/agy-models.tsv에 없는 신규 모델 id 목록
 # 위치: 저장소 lib/, 설치 후 ~/agent/lib/run-agy.sh 로 호출함
 set -uo pipefail
 
@@ -16,6 +17,7 @@ REPO="$1"; MODEL="$2"; PROMPT="$3"; LOG="$4"; shift 4
 # 작업 폴더로 이동하기 전에 상대 경로를 절대 경로로 바꿈
 abspath() { (cd "$(dirname "$1")" && echo "$(pwd)/$(basename "$1")"); }
 PROMPT="$(abspath "$PROMPT")"; LOG="$(abspath "$LOG")"
+SELF_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 GLOBAL="$HOME/.gemini/antigravity-cli/settings.json"
 MODE="${AGY_MODE:-accept-edits}"
 case "$MODE" in accept-edits|plan) ;; *) echo "AGY_MODE는 accept-edits 또는 plan" >&2; exit 2 ;; esac
@@ -42,15 +44,19 @@ except Exception:
     pass
 allow = list(perm.get("allow", []))
 deny = list(perm.get("deny", []))
-# 읽기 전용 명령 기본 허용
+# 읽기 전용 명령 기본 허용(상태를 바꾸지 않는 명령만. 접두어 일치라 하위 명령까지 적음)
 allow += [f"command({c})" for c in (
-    "ls", "pwd", "cat", "head", "tail", "wc", "grep", "rg", "find", "fd", "sed -n",
-    "git status", "git diff", "git log", "git show", "tree")]
+    "ls", "pwd", "cat", "head", "tail", "wc", "grep", "egrep", "rg", "find", "fd", "sed -n", "tree",
+    "sort", "cut", "diff", "stat", "file", "basename", "dirname", "realpath", "which",
+    "xargs grep", "xargs -0 grep", "xargs rg", "xargs wc", "xargs ls",
+    "git status", "git diff", "git log", "git show", "git grep", "git ls-files", "git branch",
+    "git blame", "git rev-parse", "git ls-tree", "git cat-file")]
 allow += extra
 # 상태 변경·위험 명령 차단
 deny += [f"command({c})" for c in (
     "git commit", "git push", "git reset", "git checkout", "git switch", "git rebase",
-    "git merge", "git stash", "git clean", "rm -rf", "sudo", "mysql", "mariadb", "ssh", "scp", "rsync")]
+    "git merge", "git stash", "git clean", "git branch -d", "git branch -D", "git branch --delete",
+    "git branch -m", "git branch -M", "git branch --move", "git branch -f", "git branch --force", "git branch -c", "git branch -C", "git branch --copy", "sort -o", "sort --output", "rm -rf", "sudo", "mysql", "mariadb", "ssh", "scp", "rsync")]
 # 저장소 안 .env 파일 읽기 차단(예시 파일 제외)
 for root, dirs, files in os.walk(repo):
     dirs[:] = [d for d in dirs if d not in (".git", "node_modules", "target", "build", "dist", ".gradle")]
@@ -70,20 +76,23 @@ if [[ -n "${AGY_ADD_DIRS:-}" ]]; then
   IFS=':' read -ra _dirs <<< "$AGY_ADD_DIRS"
   for d in "${_dirs[@]}"; do [[ -n "$d" ]] && ADD+=(--add-dir "$d"); done
 fi
+# CLI 로그 선택 기준: 이 시각 이후 생성 + 작업 폴더 일치(동시 실행 경합 방지)
+START="$(date +%s)"
 agy --mode "$MODE" --model "$MODEL" --settings "$SETTINGS" "${ADD[@]+"${ADD[@]}"}" -p "$(cat "$PROMPT")" > "$LOG" 2>&1
 code=$?
 echo "AGY_EXIT $code" >> "$LOG"
-# 권한 거부로 보고 없이 끝난 경우 원인 명령을 로그에 덧붙임
-if grep -q 'no output produced' "$LOG"; then
-  latest="$(ls -t "$HOME/.gemini/antigravity-cli/log/"*.log 2>/dev/null | head -1)"
-  echo "AGY_DENIED: allow 목록 밖 명령으로 중단됨. CLI 로그: $latest" >> "$LOG"
+# 권한 거부 명령을 transcript에서 찾아 'AGY_DENIED: <명령>'으로 덧붙임
+DENIED="$("$PY" -I "$SELF_DIR/agy-denied.py" "$START" "$PROMPT" "$(pwd)" "$(pwd -P)" 2>/dev/null)"
+if [[ -n "$DENIED" ]]; then
+  printf '%s\n' "$DENIED" >> "$LOG"
+elif grep -q 'no output produced' "$LOG"; then
+  echo "AGY_DENIED: (명령 확인 불가) 보고 없이 중단됨. ~/.gemini/antigravity-cli/log 확인 필요" >> "$LOG"
 elif ! grep -qF "${AGY_REPORT_MARK:-=== REPORT ===}" "$LOG"; then
   # 보고 없이 끝나면 한도 소진 여부 판단용 사용량을 덧붙임
   echo "AGY_USAGE:" >> "$LOG"
   agy -p "/usage" 2>&1 | head -8 >> "$LOG"
 fi
 # agy-models.tsv에 없는 모델이 목록에 생기면 로그 끝에 알림(모델 자동 전환은 하지 않음)
-SELF_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 if [[ -f "$SELF_DIR/agy-models.tsv" ]]; then
   NEW_MODELS="$(printf '%s\n' "$MODELS_OUT" | awk '{print $1}' | grep -v '^$' \
     | grep -vxFf <(cut -f1 "$SELF_DIR/agy-models.tsv") | tr '\n' ' ' | sed 's/ $//')"
