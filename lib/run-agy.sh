@@ -50,6 +50,9 @@ deny = list(perm.get("deny", []))
 allow += [f"command({c})" for c in (
     "ls", "pwd", "cat", "head", "tail", "wc", "grep", "egrep", "rg", "find", "fd", "sed -n", "tree",
     "sort", "cut", "diff", "stat", "file", "basename", "dirname", "realpath", "which",
+    # 환경 확인(버전 출력만)
+    "java -version", "java --version", "javac -version", "mvn -v", "mvn --version", "./mvnw -v", "gradle -v", "./gradlew -v",
+    "node -v", "node --version", "npm -v", "npm --version", "python3 --version", "python --version", "php -v", "git --version", "uname",
     "xargs grep", "xargs -0 grep", "xargs rg", "xargs wc", "xargs ls",
     "git status", "git diff", "git log", "git show", "git grep", "git ls-files", "git branch",
     "git blame", "git rev-parse", "git ls-tree", "git cat-file")]
