@@ -17,7 +17,7 @@ PY="$(command -v python3 || command -v python || true)"
 
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 cat > "$WORK/prompt.txt" <<P
-읽기 전용 작업이다. 파일을 만들거나 고치거나 옮기거나 지우지 마. 셸 명령은 읽기 명령만 써.
+읽기 전용 작업이다. 파일을 만들거나 고치거나 옮기거나 지우지 마. 셸 명령은 읽기 명령만 써. curl·wget·gh·git clone 같은 셸 명령으로 웹을 가져오지 말고 웹 검색·웹 페이지 읽기 도구만 써.
 작업 폴더: $WORKDIR${OFFLOAD_DIRS:+ (함께 읽을 폴더: $OFFLOAD_DIRS)}
 작업:
 $(cat "$INSTR")

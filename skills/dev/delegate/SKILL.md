@@ -45,8 +45,9 @@ Claude는 **준비도 점검 결과 판단 → 모델 선택 → 지시문 작�
 
 | 용도 | 모델 |
 |---|---|
-| 난이도 하 | `gemini-3.8-flash-medium` |
+| 난이도 하 | `gemini-4-hydrogen-medium` |
 | 난이도 중 (기본) | `gemini-3.8-flash-high` |
+| 난이도 중 (시험 중) | `gemini-4-hydrogen-high` — 사용자가 시험을 원하거나 flash-high 결과와 비교할 때 |
 | 난이도 상 | `gemini-4-argon-medium` |
 | 준비도 점검 | `gemini-3.8-flash-high` |
 | 브라우저 확인 | `gemini-3.8-flash-medium` |
@@ -57,6 +58,8 @@ Claude는 **준비도 점검 결과 판단 → 모델 선택 → 지시문 작�
    - Argon 주간 20% 미만 → 난이도 상은 `gemini-4-hydrogen-high`로 한다.
    - **한도 소진 시 대체 순서**(남은 양 5% 미만이면 소진으로 봄): Gemini 공용 → Argon(`gemini-4-argon-medium`) → agy의 Claude·GPT 묶음(`claude-sonnet-5-5-medium`). Claude·GPT 묶음은 Antigravity 구독 한도라 Claude Code 사용량과 별개이며, Gemini 묶음이 모두 소진됐을 때만 쓴다.
    - **모든 묶음 소진** → 위임하지 않고 멈춘다. 초기화 시각을 알리고 "초기화까지 대기 / Claude가 직접 구현" 중 사용자 선택을 받는다(직접 구현은 사용자 승인 시에만).
+모델별 용도·평가 기록은 `~/agent/lib/agy-models.tsv`에 있다. `조건부후보` 모델(Orchestrator)은 메모의 조건(독립 조각으로 나뉘는 작업)에 맞고 확인 사항이 끝난 경우에만 쓴다.
+
 5. 고른 모델·난이도·근거가 된 남은 한도를 한 줄로 알린다.
 6. 매핑을 바꿀 때는 `~/agent/notes/agy-model-log.md` 기록(8단계)을 근거로 한다. 같은 모델·난이도에서 재작업이 2회 이상 쌓이면 한 단계 높은 모델을 제안한다.
 
