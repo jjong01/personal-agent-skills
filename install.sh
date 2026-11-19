@@ -39,15 +39,29 @@ link "$REPO_DIR/global/AGENTS.md" "$HOME/agent/AGENTS.md"
 link "$HOME/agent/AGENTS.md" "$HOME/.claude/CLAUDE.md"
 link "$HOME/agent/AGENTS.md" "$HOME/.gemini/GEMINI.md"
 
-echo "## 3. 스킬"
-for skill in "$REPO_DIR"/skills/*/; do
+echo "## 3. 스킬 (skills/<분류>/<이름> → 도구별 skills/<이름>)"
+# 저장소에서 사라진 스킬을 가리키는 링크 정리(폴더 구조 변경·이름 변경 대비)
+for dir in "$HOME/.claude/skills" "$HOME/.gemini/config/skills"; do
+  for l in "$dir"/*; do
+    [[ -L "$l" ]] || continue
+    t="$(readlink "$l")"
+    [[ "$t" == "$REPO_DIR"/* && ! -e "$t" ]] && { run rm "$l"; echo "removed $l (대상 없음)"; }
+  done
+done
+seen=" "
+for skill in "$REPO_DIR"/skills/*/*/; do
   skill="${skill%/}"
   name="$(basename "$skill")"
   [[ -f "$skill/SKILL.md" ]] || continue
+  [[ "$seen" == *" $name "* ]] && { echo "중복 스킬 이름: $name ($skill) 건너뜀" >&2; continue; }
+  seen+="$name "
   link "$skill" "$HOME/.claude/skills/$name"
   # .claude-only 표시가 있는 스킬은 Claude Code에만 연결함
   [[ -f "$skill/.claude-only" ]] || link "$skill" "$HOME/.gemini/config/skills/$name"
 done
+
+echo "## 3-1. 공용 스크립트"
+link "$REPO_DIR/lib" "$HOME/agent/lib"
 
 echo "## 4. 서브에이전트 (Claude Code 전용)"
 for agent in "$REPO_DIR"/agents/*.md; do

@@ -90,15 +90,31 @@ if ($DryRun -and -not (Test-Path "$H\agent\AGENTS.md")) {
     New-Link "$H\agent\AGENTS.md" "$H\.gemini\GEMINI.md"
 }
 
-Write-Host '## 3. 스킬'
-Get-ChildItem -LiteralPath (Join-Path $Repo 'skills') -Directory | ForEach-Object {
+Write-Host '## 3. 스킬 (skills\<분류>\<이름> → 도구별 skills\<이름>)'
+# 저장소에서 사라진 스킬을 가리키는 링크 정리(폴더 구조 변경·이름 변경 대비)
+foreach ($dir in @("$H\.claude\skills", "$H\.gemini\config\skills")) {
+    if (-not (Test-Path -LiteralPath $dir)) { continue }
+    Get-ChildItem -LiteralPath $dir -Force | Where-Object { $_.LinkType } | ForEach-Object {
+        $t = Get-LinkTarget $_.FullName
+        if ($t -and $t.StartsWith($Repo, [StringComparison]::OrdinalIgnoreCase) -and -not (Test-Path -LiteralPath $t)) {
+            if ($DryRun) { Write-Host "[dry-run] remove $($_.FullName)" } else { $_.Delete(); Write-Host "removed $($_.FullName) (대상 없음)" }
+        }
+    }
+}
+$seen = @{}
+Get-ChildItem -LiteralPath (Join-Path $Repo 'skills') -Directory | ForEach-Object { Get-ChildItem -LiteralPath $_.FullName -Directory } | ForEach-Object {
     if (-not (Test-Path (Join-Path $_.FullName 'SKILL.md'))) { return }
+    if ($seen.ContainsKey($_.Name)) { Write-Host "중복 스킬 이름: $($_.Name) ($($_.FullName)) 건너뜀" -ForegroundColor Yellow; return }
+    $seen[$_.Name] = $true
     New-Link $_.FullName "$H\.claude\skills\$($_.Name)"
     # .claude-only 표시가 있는 스킬은 Claude Code에만 연결함
     if (-not (Test-Path (Join-Path $_.FullName '.claude-only'))) {
         New-Link $_.FullName "$H\.gemini\config\skills\$($_.Name)"
     }
 }
+
+Write-Host '## 3-1. 공용 스크립트'
+New-Link (Join-Path $Repo 'lib') "$H\agent\lib"
 
 Write-Host '## 4. 서브에이전트 (Claude Code 전용)'
 $agentsDir = Join-Path $Repo 'agents'
@@ -114,7 +130,7 @@ $hints = [ordered]@{
     'agy'    = 'Antigravity CLI 설치 안내 참고'
     'git'    = 'winget install Git.Git   # Claude Code가 Git Bash로 명령을 실행함'
     'node'   = 'winget install OpenJS.NodeJS.LTS'
-    'python' = 'winget install Python.Python.3.12   # delegate 스킬 run-agy.sh에 필요'
+    'python' = 'winget install Python.Python.3.12   # lib\run-agy.sh(delegate·image-edit·offload)에 필요'
     'rg'     = 'winget install BurntSushi.ripgrep.MSVC'
     'fd'     = 'winget install sharkdp.fd'
     'bat'    = 'winget install sharkdp.bat'

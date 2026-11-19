@@ -70,7 +70,7 @@ Claude는 **준비도 점검 결과 판단 → 모델 선택 → 지시문 작�
 
 ## 4. 실행
 
-반드시 [run-agy.sh](run-agy.sh)로 실행한다(`agy`를 직접 부르지 않음, `--dangerously-skip-permissions` 금지). 래퍼가 처리하는 것:
+반드시 [run-agy.sh](../../../lib/run-agy.sh)(설치 후 `~/agent/lib/run-agy.sh`)로 실행한다(`agy`를 직접 부르지 않음, `--dangerously-skip-permissions` 금지). 래퍼가 처리하는 것:
 
 - `--settings`는 전역 권한을 **덮어쓰므로** 전역 deny, 기본 deny(git 상태 변경·DB·ssh·rm -rf), 저장소 `.env` 읽기 차단을 매번 합쳐 넘긴다.
 - 읽기 전용 명령(ls, cat, grep, git status/diff/log 등)은 기본 허용한다. 비대화 모드에서는 allow 목록 밖 명령을 하나라도 쓰면 **보고 없이 종료**되기 때문이다.
@@ -84,7 +84,7 @@ Claude는 **준비도 점검 결과 판단 → 모델 선택 → 지시문 작�
 | npm | `command(npm test)`, `command(npm run build)`, `command(npm run lint)`, `command(npx eslint)` |
 
 ```sh
-S=<scratchpad>; ~/.claude/skills/delegate/run-agy.sh <저장소> <모델> $S/agy_<작업>_prompt.txt $S/agy_<작업>.log \
+S=<scratchpad>; ~/agent/lib/run-agy.sh <저장소> <모델> $S/agy_<작업>_prompt.txt $S/agy_<작업>.log \
   'command(mvn test)' 'command(mvn -q test)'
 ```
 

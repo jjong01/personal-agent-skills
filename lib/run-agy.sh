@@ -6,10 +6,15 @@
 #   예: run-agy.sh ~/dev/app gemini-3.8-flash-high p.txt run.log 'command(mvn test)'
 # 규칙은 접두어 일치: command(mvn test)는 'mvn test -q'도 허용함. '*'를 붙이면 일치하지 않음
 # 환경 변수 AGY_MODE: accept-edits(기본, 파일 수정 자동 승인) | plan(읽기 전용 점검)
+#          AGY_ADD_DIRS: 작업 공간에 더할 폴더(':' 구분), AGY_REPORT_MARK: 정상 종료 판단 표시(기본 '=== REPORT ===')
+# 위치: 저장소 lib/, 설치 후 ~/agent/lib/run-agy.sh 로 호출함
 set -uo pipefail
 
 [[ $# -lt 4 ]] && { echo "usage: $0 <repo> <model> <prompt-file> <log-file> [allow...]" >&2; exit 2; }
 REPO="$1"; MODEL="$2"; PROMPT="$3"; LOG="$4"; shift 4
+# 작업 폴더로 이동하기 전에 상대 경로를 절대 경로로 바꿈
+abspath() { (cd "$(dirname "$1")" && echo "$(pwd)/$(basename "$1")"); }
+PROMPT="$(abspath "$PROMPT")"; LOG="$(abspath "$LOG")"
 GLOBAL="$HOME/.gemini/antigravity-cli/settings.json"
 MODE="${AGY_MODE:-accept-edits}"
 case "$MODE" in accept-edits|plan) ;; *) echo "AGY_MODE는 accept-edits 또는 plan" >&2; exit 2 ;; esac
@@ -58,14 +63,19 @@ EOF
 )"
 
 cd "$REPO" || exit 2
-agy --mode "$MODE" --model "$MODEL" --settings "$SETTINGS" -p "$(cat "$PROMPT")" > "$LOG" 2>&1
+ADD=()
+if [[ -n "${AGY_ADD_DIRS:-}" ]]; then
+  IFS=':' read -ra _dirs <<< "$AGY_ADD_DIRS"
+  for d in "${_dirs[@]}"; do [[ -n "$d" ]] && ADD+=(--add-dir "$d"); done
+fi
+agy --mode "$MODE" --model "$MODEL" --settings "$SETTINGS" "${ADD[@]+"${ADD[@]}"}" -p "$(cat "$PROMPT")" > "$LOG" 2>&1
 code=$?
 echo "AGY_EXIT $code" >> "$LOG"
 # 권한 거부로 보고 없이 끝난 경우 원인 명령을 로그에 덧붙임
 if grep -q 'no output produced' "$LOG"; then
   latest="$(ls -t "$HOME/.gemini/antigravity-cli/log/"*.log 2>/dev/null | head -1)"
   echo "AGY_DENIED: allow 목록 밖 명령으로 중단됨. CLI 로그: $latest" >> "$LOG"
-elif ! grep -q '=== REPORT ===' "$LOG"; then
+elif ! grep -qF "${AGY_REPORT_MARK:-=== REPORT ===}" "$LOG"; then
   # 보고 없이 끝나면 한도 소진 여부 판단용 사용량을 덧붙임
   echo "AGY_USAGE:" >> "$LOG"
   agy -p "/usage" 2>&1 | head -8 >> "$LOG"

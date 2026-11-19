@@ -34,7 +34,7 @@ $(cat "$INSTR")
 EOF
 
 LOG="$WORK/agy.log"
-"$(dirname "$0")/../delegate/run-agy.sh" "$(dirname "$REF")" "$MODEL" "$WORK/prompt.txt" "$LOG" >/dev/null 2>&1
+"$HOME/agent/lib/run-agy.sh" "$(dirname "$REF")" "$MODEL" "$WORK/prompt.txt" "$LOG" >/dev/null 2>&1
 grep -q 'AGY_DENIED' "$LOG" && echo "참고: agy가 허용 밖 명령을 시도해 중간에 멈춤(생성 결과가 있으면 계속 진행)" >&2
 
 "$PY" -I - "$MARK" "$REF" "$OUT" "$KEEP" <<'EOF'
