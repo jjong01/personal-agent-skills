@@ -62,5 +62,37 @@
     "type": "command",
     "command": "bash ~/.claude/statusline.sh",
     "refreshInterval": 60
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/terminal-status.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/terminal-status.sh"
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/terminal-status.sh"
+          }
+        ]
+      }
+    ]
   }
 }

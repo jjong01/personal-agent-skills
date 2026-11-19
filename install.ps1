@@ -116,6 +116,7 @@ Get-ChildItem -LiteralPath (Join-Path $Repo 'skills') -Directory | ForEach-Objec
 Write-Host '## 3-1. 공용 스크립트'
 New-Link (Join-Path $Repo 'lib') "$H\agent\lib"
 New-Link (Join-Path $Repo 'extras\statusline.sh') "$H\.claude\statusline.sh"   # 상태줄(구독·맥락·agy 할당량 사용률)
+New-Link (Join-Path $Repo 'extras\terminal-status.sh') "$H\.claude\hooks\terminal-status.sh"   # 터미널별 효과음·알림 훅
 
 Write-Host '## 4. 서브에이전트 (Claude Code 전용)'
 $agentsDir = Join-Path $Repo 'agents'
