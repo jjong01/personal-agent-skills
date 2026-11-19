@@ -40,6 +40,7 @@ All responses must be in Korean (except for development terminology).
 - Implement the stages of a finalized plan document (e.g., HS1–HS5, WS1–WS4, M1–M3) without asking the user first: run the `stage-runner` subagent (it follows the `/delegate` procedure in its own context) and read only its returned report. Keep the main session for planning, user questions and commits.
 - When stage-runner returns `QUESTIONS`, ask the user, then rerun stage-runner with the answers as user decisions. When it returns `STAGE REPORT`, summarize it and get approval before committing.
 - Also use `/delegate` (via stage-runner) without asking for many mechanical fixes with a known cause, and for browser/screen verification of finished work.
+- Browser verification: when the plan document has screen scenarios, start it via stage-runner right after the last implementation stage is committed, without waiting for a request. Do not verify with Claude browser tools in the main session; if stage-runner reports missing test accounts or a failed login, ask the user for local test accounts and rerun it. Only re-check items reported as failed.
 - Exclusions (do these directly): investigation or design decisions, unclear root-cause debugging, changes of 1–3 lines, git/DB/deploy/server work, the final regression-test stage.
 - Use `/handoff` only when the feature changes or the main context exceeds ~150k tokens.
 
