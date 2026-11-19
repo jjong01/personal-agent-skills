@@ -57,5 +57,10 @@
   },
   "enabledPlugins": {
     "context-mode@context-mode": true
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline.sh",
+    "refreshInterval": 60
   }
 }

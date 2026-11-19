@@ -62,6 +62,7 @@ done
 
 echo "## 3-1. 공용 스크립트"
 link "$REPO_DIR/lib" "$HOME/agent/lib"
+link "$REPO_DIR/extras/statusline.sh" "$HOME/.claude/statusline.sh"   # 상태줄(구독·맥락·agy 할당량 사용률)
 
 echo "## 4. 서브에이전트 (Claude Code 전용)"
 for agent in "$REPO_DIR"/agents/*.md; do
@@ -81,13 +82,14 @@ fi
 
 echo "## 6. 도구 확인"
 missing=()
-for t in claude agy node git lsd bat rg fd zoxide delta; do
+for t in claude agy node git jq lsd bat rg fd zoxide delta; do
   command -v "$t" >/dev/null 2>&1 || missing+=("$t")
 done
 if (( ${#missing[@]} )); then
   echo "없음: ${missing[*]}"
   echo "  lsd·bat는 AGENTS.md의 zsh 별칭 전제, rg·fd·zoxide·delta는 선택(없으면 grep·find 사용)"
-  echo "  macOS 설치 예: brew install lsd bat ripgrep fd zoxide git-delta node"
+  echo "  jq는 상태줄(statusline.sh)에 필요"
+  echo "  macOS 설치 예: brew install jq lsd bat ripgrep fd zoxide git-delta node"
   echo "                 brew install --cask antigravity-cli   # agy"
 else
   echo "ok      필요한 도구 모두 있음"

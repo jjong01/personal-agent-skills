@@ -115,6 +115,7 @@ Get-ChildItem -LiteralPath (Join-Path $Repo 'skills') -Directory | ForEach-Objec
 
 Write-Host '## 3-1. 공용 스크립트'
 New-Link (Join-Path $Repo 'lib') "$H\agent\lib"
+New-Link (Join-Path $Repo 'extras\statusline.sh') "$H\.claude\statusline.sh"   # 상태줄(구독·맥락·agy 할당량 사용률)
 
 Write-Host '## 4. 서브에이전트 (Claude Code 전용)'
 $agentsDir = Join-Path $Repo 'agents'
@@ -147,6 +148,7 @@ $hints = [ordered]@{
     'agy'    = 'Antigravity CLI 설치 안내 참고'
     'git'    = 'winget install Git.Git   # Claude Code가 Git Bash로 명령을 실행함'
     'node'   = 'winget install OpenJS.NodeJS.LTS'
+    'jq'     = 'winget install jqlang.jq   # 상태줄(statusline.sh)에 필요'
     'python' = 'winget install Python.Python.3.12   # lib\run-agy.sh(delegate·image-edit·offload)에 필요'
     'rg'     = 'winget install BurntSushi.ripgrep.MSVC'
     'fd'     = 'winget install sharkdp.fd'

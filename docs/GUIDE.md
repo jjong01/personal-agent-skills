@@ -41,13 +41,14 @@
 
 ## 3. 기기별로 따로 필요한 것
 
-이 저장소는 공개 저장소이므로 아래는 올리지 않는다.
+이 저장소는 공개 저장소이므로 아래는 올리지 않는다. 상태줄(`extras/statusline.sh`, jq 필요)은 저장소에 있으며 설치 시 연결·설정됨.
 
 | 항목 | 위치 | 새 PC에서 |
 |---|---|---|
 | 프로젝트 지시 파일 | 각 프로젝트의 `AGENTS.md`·`CLAUDE.md` (gitignore된 경우) | 프로젝트에서 `/init`으로 다시 만들거나 비공개 경로로 복사. **없으면 에이전트가 구조를 매번 다시 탐색해 토큰을 더 씀** |
 | Claude 기억 | `~/.claude/projects/*/memory/` | 필요한 결정은 프로젝트 문서에도 남겨 둠 |
-| hooks·statusLine·theme | `~/.claude/settings.json` | 기기별로 설정 |
+| hooks·theme | `~/.claude/settings.json` | 기기별로 설정(알림 소리 등 터미널별 개인 설정) |
+| claude.ai 동기화 스킬 | `~/.claude/skills/synced/` | 같은 계정으로 로그인하면 자동으로 받아짐(docs·pptx·xlsx 등) |
 | 프로젝트 `.env` 읽기 차단(agy) | agy 설정 | `run-agy.sh`가 실행 때마다 자동 추가함 |
 | 로그인·한도 | Claude·agy 계정 | 각 PC에서 로그인 |
 
