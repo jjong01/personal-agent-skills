@@ -105,6 +105,8 @@ done
 if command -v agy >/dev/null 2>&1; then
   if agy models 2>/dev/null | grep -q gemini; then echo "ok      agy 모델 목록 조회됨(로그인 상태)"
   else echo "확인 필요: agy models 실패. agy를 한 번 실행해 로그인"; fi
+  if agy mcp list 2>/dev/null | grep -q '^chrome-devtools'; then echo "ok      agy chrome-devtools MCP 등록됨(브라우저 확인)"
+  else echo "선택: 브라우저 확인을 맡기려면 agy mcp add chrome-devtools npx -y chrome-devtools-mcp@1.10.1"; fi
 else
   echo "확인 필요: agy 없음. delegate·offload·image-edit는 agy가 있어야 위임함"
 fi

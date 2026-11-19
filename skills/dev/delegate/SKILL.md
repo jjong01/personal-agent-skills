@@ -112,7 +112,10 @@ S=<scratchpad>; ~/agent/lib/run-agy.sh <저장소> <모델> $S/agy_<작업>_prom
 
 ## 7. 브라우저 확인 (`--browser`, 사용자 요청, 또는 화면 시나리오가 있는 계획의 마지막 구현 단계 커밋 후)
 
-Claude 브라우저 도구 대신 agy(chrome-devtools 플러그인)에 맡긴다. 로그인 계정은 프로젝트 `AGENTS.md`의 로컬 시험 계정을 지시문에 적고, 없으면 사용자에게 받는다(`.env`에서 찾지 않음). 확인할 URL·계정·시나리오·기대 결과를 지시문에 적고, 결과는 시나리오별 `통과/실패 + 한 줄 근거`로만 보고하게 한다. 실패 항목만 Claude가 직접 다시 본다.
+Claude 브라우저 도구 대신 agy의 chrome-devtools MCP에 맡긴다.
+- 준비(기기당 1회): `agy mcp list`에 `chrome-devtools`가 없으면 사용자 확인 후 `agy mcp add chrome-devtools npx -y chrome-devtools-mcp@1.10.1`. chrome-devtools 플러그인만으로는 브라우저 조작 도구가 없음.
+- 실행: `AGY_BROWSER=1`을 붙여 `run-agy.sh`를 실행한다(필요한 MCP 도구만 허용, 형식 `mcp(<서버>/<도구>)`). 페이지 열기는 `execute_url(<주소 접두어>)` 권한이 따로 필요하며 기본은 `http://localhost`·`http://127.0.0.1`·`about:blank`만 허용한다. 다른 주소(개발 서버 도메인 등)는 `AGY_BROWSER_URLS="<접두어> ..."`로 지정한다. `mcp(*)`·서버 전체 허용은 쓰지 않는다. agy가 `~/.gemini/config/mcp_config.json`을 읽으려다 거부되면 허용하지 말고 지시문에 "MCP 설정 파일은 읽지 말 것"을 넣어 재실행한다.
+- MCP 브라우저는 별도 프로필로 열려 로그인 상태가 없다고 가정한다. 로그인 계정은 프로젝트 `AGENTS.md`의 로컬 시험 계정을 지시문에 적고, 없으면 사용자에게 받는다(`.env`에서 찾지 않음). 확인할 URL·계정·시나리오·기대 결과를 지시문에 적고, 결과는 시나리오별 `통과/실패 + 한 줄 근거`로만 보고하게 한다. 실패 항목만 Claude가 직접 다시 본다.
 
 ## 8. 마무리
 

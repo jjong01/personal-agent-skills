@@ -34,6 +34,7 @@
 | 5. 저장소 | `git clone … ~/dev/personal-agent-skills` | `git clone … $HOME\dev\personal-agent-skills` |
 | 6. 설치 | `./install.sh --dry-run` → `./install.sh` | 개발자 모드 켠 뒤 `install.ps1 -DryRun` → `install.ps1` |
 | 7. 플러그인 | Claude Code에서 `/plugin install context-mode@context-mode` | 같음 |
+| 7-1. 브라우저 확인(선택) | `agy mcp add chrome-devtools npx -y chrome-devtools-mcp@1.10.1` — delegate 브라우저 확인에 필요(플러그인만으로는 브라우저 도구 없음) | 같음 |
 | 8. 점검 | 설치 마지막 "점검" 결과에서 `확인 필요` 항목 해결 | 같음 |
 | 9. 측정(선택) | `npx ccusage@latest`로 토큰 사용량 확인 | 같음 |
 

@@ -6,6 +6,8 @@
 #   예: run-agy.sh ~/dev/app gemini-3.8-flash-high p.txt run.log 'command(mvn test)'
 # 규칙은 공백 단위 접두어 일치: command(mvn test)는 'mvn test -q'는 허용하나 'mvn test-compile'·'mvn -q test'는 허용하지 않음. '*'를 붙이면 일치하지 않음
 # 환경 변수 AGY_MODE: accept-edits(기본, 파일 수정 자동 승인) | plan(읽기 전용 점검)
+#          AGY_BROWSER=1: 브라우저 확인용 chrome-devtools MCP 도구 허용(설치·디버깅·파일 업로드 도구 제외)
+#          AGY_BROWSER_URLS: 열 수 있는 주소 접두어(공백 구분, 기본 http://localhost http://127.0.0.1 about:blank)
 #          AGY_ADD_DIRS: 작업 공간에 더할 폴더(':' 구분), AGY_REPORT_MARK: 정상 종료 판단 표시(기본 '=== REPORT ===')
 # 로그 끝 AGY_DENIED: <명령>: 권한 거부된 명령(agy-denied.py가 대화 transcript에서 추출)
 #        AGY_NEW_MODELS: lib/agy-models.tsv에 없는 신규 모델 id 목록
@@ -52,6 +54,16 @@ allow += [f"command({c})" for c in (
     "git status", "git diff", "git log", "git show", "git grep", "git ls-files", "git branch",
     "git blame", "git rev-parse", "git ls-tree", "git cat-file")]
 allow += extra
+# 브라우저 확인: MCP 규칙은 mcp(<서버>/<도구>) 형식. 서버 전체 와일드카드는 쓰지 않고 필요한 도구만 나열함
+if os.environ.get("AGY_BROWSER") == "1":
+    allow += [f"mcp(chrome-devtools/{t})" for t in (
+        "list_pages", "new_page", "select_page", "close_page", "navigate_page", "resize_page",
+        "take_snapshot", "take_screenshot", "wait_for", "click", "hover", "fill", "fill_form",
+        "type_text", "press_key", "handle_dialog", "evaluate_script",
+        "get_console_message", "list_network_requests", "get_network_request")]
+    # 페이지 열기는 execute_url(<주소 접두어>) 권한이 따로 필요함. 기본은 로컬 주소만
+    urls = os.environ.get("AGY_BROWSER_URLS", "http://localhost http://127.0.0.1 about:blank").split()
+    allow += [f"execute_url({u})" for u in urls]
 # 상태 변경·위험 명령 차단
 deny += [f"command({c})" for c in (
     "git commit", "git push", "git reset", "git checkout", "git switch", "git rebase",
