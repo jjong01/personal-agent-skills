@@ -176,3 +176,18 @@ run-offload.sh 호출 → agy plan 모드로 웹 검색/문서 독해 (읽기 �
 - [ ] 작업 주제가 전환될 때 `/clear`를 실행하는가
 - [ ] `context-mode` 플러그인이 정상 작동 중인가
 - [ ] 주기적으로 `npx ccusage@latest`로 사용량을 점검하는가
+
+## 11. 도입 이력·추천 순위
+
+2026-11-18 토큰 절약 설정 작업에서 정한 추천 순위와 적용 상태. 상세 근거는 개인 인계 메모(`~/agent/notes/handoff/`)에 기록함.
+
+| 순위 | 항목 | 상태 | 비고 |
+|---|---|---|---|
+| 1 | `/init`으로 프로젝트 지시 파일 생성 | 적용 (2026-11-18) | 기존 프로젝트 4곳. 각 저장소 ignore 목록에 `/CLAUDE.md` 추가(SVN 저장소는 svn:ignore도) |
+| 2 | 사용자 스킬 `commit`·`handoff` | 적용 | 이후 이 저장소 `skills/`로 이관 |
+| 3 | context-mode 플러그인 (mksglu/context-mode) | 적용 | 훅·스크립트 검토 후 설치. 서브에이전트 빌드 명령 차단은 `run-logged.sh`로 대응 |
+| 보류 | ccusage 재측정 | 예정 | 기준값 `~/agent/notes/ccusage-baseline-20261118.json`. 1~2주 사용 후 `npx -y ccusage@latest monthly --by-agent`로 비교 |
+| 보류 | Ponytail (DietrichGebert/ponytail) | 미정 | 재측정 결과 보고 결정. 적용 시 코드 프로젝트만, `PONYTAIL_MAP=0`, Task board 끔, `lite`로 시작 |
+| 낮음 | `/android-build` 스킬 | 미생성 | 필요할 때 생성 |
+
+- 판단 근거: Claude 토큰의 96~98%가 캐시 읽기(누적 맥락)이므로 맥락 축소(`/init`, `/clear`, context-mode, 위임)가 우선이고 출력 축소 도구(Ponytail 등)는 효과가 작음.
