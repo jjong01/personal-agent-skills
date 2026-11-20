@@ -191,3 +191,16 @@ run-offload.sh 호출 → agy plan 모드로 웹 검색/문서 독해 (읽기 �
 | 낮음 | `/android-build` 스킬 | 미생성 | 필요할 때 생성 |
 
 - 판단 근거: Claude 토큰의 96~98%가 캐시 읽기(누적 맥락)이므로 맥락 축소(`/init`, `/clear`, context-mode, 위임)가 우선이고 출력 축소 도구(Ponytail 등)는 효과가 작음.
+
+## 12. agy에서 스킬 사용
+
+agy도 같은 `SKILL.md` 형식을 읽음(전역 `~/.gemini/config/skills/<이름>/`, 설명 매칭 자동 사용 또는 `/<이름>` 호출). 설치 스크립트는 `.claude-only` 표시가 없는 스킬만 agy 쪽에 링크함.
+
+| 스킬 | agy | 비고 |
+|---|---|---|
+| `commit`, `handoff` | 동작 | 공통 링크 |
+| `delegate`, `offload` | 제외 (`.claude-only`) | Claude 토큰 절약용 위임 구조라 agy 안에서는 불필요. agy에서는 직접 처리하거나 내장 서브에이전트(`research` 등)·워크플로 사용 |
+| `image-edit` | 제외 (`.claude-only`) | agy에서는 내장 이미지 생성 기능과 `sips`·PIL 직접 사용 |
+
+- 방침: 위임 계열 스킬은 agy용으로 따로 만들지 않음. `SKILL.md` 안 환경별 분기나 래퍼의 agy 내부 감지는 맥락 증가·세션 충돌 위험으로 채택하지 않음.
+- 미확인: 비대화 모드(`agy -p`)에서 내장 서브에이전트 안정성, Windows Junction 링크 스킬 인식 여부.
