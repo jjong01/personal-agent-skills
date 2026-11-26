@@ -96,7 +96,7 @@ S=<scratchpad>; ~/agent/lib/run-agy.sh <저장소> <모델> $S/agy_<작업>_prom
 - 여러 곳이 틀렸거나 시험 실패가 남음 → 지적 사항만 적은 짧은 지시문으로 재위임(같은 모델 1회, 그다음 한 단계 높은 용도의 모델 1회: 구현-하 → 구현-중 → 구현-상, 각 모델은 `agy-pick.sh`로 고름). 두 번 넘게 실패하면 멈추고 사용자에게 보고한다.
 - 실행 중 한도가 소진돼 멈춘 경우(로그 끝 `AGY_USAGE`에 5% 미만 묶음) → 바뀐 파일은 그대로 두고, `agy-pick.sh`가 고른 다음 묶음(대체 순서) 모델로 "이미 바뀐 파일을 이어서 완성"하는 지시문을 다시 위임한다.
 
-## 7. 브라우저 확인 (`--browser`, 사용자 요청, 또는 화면 시나리오가 있는 계획의 마지막 구현 단계 커밋 후)
+## 7. 브라우저 확인 (`--browser` 또는 사용자 명시 요청 시만. 기본은 사용자 직접 확인용 항목표 제공)
 
 Claude 브라우저 도구 대신 agy의 chrome-devtools MCP에 맡긴다.
 - 준비(기기당 1회): `agy mcp list`에 `chrome-devtools`가 없으면 사용자 확인 후 `agy mcp add chrome-devtools npx -y chrome-devtools-mcp@1.10.1`. chrome-devtools 플러그인만으로는 브라우저 조작 도구가 없음.

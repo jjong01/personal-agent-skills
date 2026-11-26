@@ -62,10 +62,11 @@ Claude Code와 Antigravity(agy)를 연계한 개인 에이전트 작업 환경�
 [결과 검토] stage-runner 보고(STAGE REPORT) 수신 → 변경 diff 요약·로그·위험 파일 검토
     │
     ▼
-[커밋 승인] 메인 세션: 사용자 승인 확인 후 /commit 실행 (기능 전환 시 /handoff → /clear)
+[커밋 승인] 메인 세션: 사용자 승인 확인 후 /commit 실행 (경계 시 /clear 추천)
     │
     ▼
-[화면 확인] 마지막 단계 완료 후: stage-runner --browser 로 agy chrome-devtools MCP 검증
+[화면 확인] 마지막 단계 완료 후: 메인이 확인 항목표(위치·동작·기대 결과) 제공 → 사용자 직접 확인
+    │       (agy 브라우저 확인은 사용자 요청 시만. 느려서 기본에서 제외)
     │
     ▼
 [병합 전 검토] 메인/서브에이전트: /code-review low 실행, 보안·인증 변경 시 /security-review 병행
@@ -128,7 +129,7 @@ run-offload.sh 호출 → agy plan 모드로 웹 검색/문서 독해 (읽기 �
 | 5. 저장소 | `git clone … ~/dev/personal-agent-skills` | `git clone … $HOME\dev\personal-agent-skills` |
 | 6. 설치 | `./install.sh --dry-run` → `./install.sh` | 개발자 모드 활성화 후 `install.ps1 -DryRun` → `install.ps1` |
 | 7. 플러그인 | Claude Code에서 `/plugin install context-mode@context-mode` | 같음 |
-| 7-1. 브라우저 확인 | `agy mcp add chrome-devtools npx -y chrome-devtools-mcp@1.10.1` | 같음 (delegate 브라우저 검증 시 필수) |
+| 7-1. 브라우저 확인 | `agy mcp add chrome-devtools npx -y chrome-devtools-mcp@1.10.1` | 같음 (요청 시 agy 브라우저 확인에만 필요) |
 | 8. 점검 | 설치 스크립트 출력의 `확인 필요` 항목 해결 | 같음 |
 | 9. 사용량 확인 | `npx ccusage@latest`로 토큰 사용량 확인 | 같음 |
 
