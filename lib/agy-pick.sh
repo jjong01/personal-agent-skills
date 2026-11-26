@@ -38,7 +38,7 @@ bundle_left() {
       if (b=="gemini" && name !~ /gemini models/) next
       if (b=="argon" && name !~ /argon/) next
       if (b=="claude-gpt" && name !~ /claude/) next
-      v = $3; sub(/%.*/, "", v); v += 0
+      v = $3; sub(/%.*/, "", v); v = int(v + 0)  # 소수 %는 버림(bash 정수 비교용)
       if (!found || v < min) { min = v; reset = $4 }
       found = 1 }
     END { if (found) print min "\t" reset }' "$QUOTA"

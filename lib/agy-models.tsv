@@ -4,7 +4,7 @@ gemini-3.8-flash-low	평가중	gemini	미사용
 gemini-3.8-flash-medium	조사-기본,브라우저,이미지-기본	gemini	구현-하는 2026-11-19부터 hydrogen-medium으로 교체. 요약·번역·단순 조사, 이미지, 브라우저 확인 기본
 gemini-3.8-flash-high	대체-1,점검,조사-비교	gemini	구현-중 기본이었으나 2026-11 hydrogen-high로 교체(사용자 승인), 이후 대체-1. 준비도 점검·여러 자료 비교·긴 문서·정리안 겸용
 gemini-4-argon-low	평가중	argon	
-gemini-4-argon-medium	구현-상,조사-분석,이미지-상,대체-2	argon	조사(판단 어려운 분석, 글 품질이 중요한 초안)·이미지 어려운 경우 겸용. Argon 주간 한도 별도 묶음
+gemini-4-argon-medium	구현-상,조사-분석,이미지-상,대체-2	argon	조사(판단 어려운 분석, 글 품질이 중요한 초안)·이미지 어려운 경우 겸용. Argon 주간 한도 별도 묶음. 2026-11-26 확인: `/usage`에 미표시, 공용 묶음과 별개(argon-medium 분석 1회에 Gemini 공용 변화 없음) → 한도 미확인 유지
 gemini-4-argon-high	평가중	argon	
 gemini-4-hydrogen-low	평가중	gemini	
 gemini-4-hydrogen-medium	구현-하	gemini	2026-11-19 1회: 통과 29s(flash-medium 85s), 시험 무변경, 보고 정상, 같은 Gemini 공용 묶음

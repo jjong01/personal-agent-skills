@@ -75,9 +75,8 @@ deny += [f"command({c})" for c in (
     "git branch -m", "git branch -M", "git branch --move", "git branch -f", "git branch --force", "git branch -c", "git branch -C", "git branch --copy", "sort -o", "sort --output", "rm -rf", "sudo", "mysql", "mariadb", "ssh", "scp", "rsync")]
 # 저장소 안 .env 파일 읽기 차단(예시 파일 제외)
 for root, dirs, files in os.walk(repo):
-    dirs[:] = [d for d in dirs if d not in (".git", "node_modules", "target", "build", "dist", ".gradle")]
-    if root.count(os.sep) - repo.count(os.sep) > 3:
-        dirs[:] = []
+    # 깊이 제한 없이 탐색함(모노레포 하위 패키지 .env 포함). 대용량 산출물 폴더만 제외
+    dirs[:] = [d for d in dirs if d not in (".git", "node_modules", "target", "build", "dist", ".gradle", ".venv", "venv", "__pycache__", ".next", "coverage", "vendor")]
     for f in files:
         if f.startswith(".env") and not f.endswith((".example", ".template", ".sample")):
             deny.append(f"read_file({os.path.join(root, f)})")
