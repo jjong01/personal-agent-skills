@@ -20,6 +20,12 @@
 5. [Token Optimization] Do not include greetings, additional explanations, introductions, or conclusions (e.g., 'Yes, I understand', 'Please refer to the following code'). Output only the requested deliverables (code, plans, etc.) immediately.
 6. [Code Output] When modifying or suggesting code, do not reprint the entire file. Provide only the required changes (Diff) or the core logic to be added concisely.
 7. [Simplicity & Clarity] Keep all responses concise and condensed, while conveying core content intuitively and clearly.
+8. [Work Report] Report implementation/fix results only in this format, one line per item:
+   - 성공: <task> — <result/verification>
+   - 실패: <task> — 원인: <cause> — 조치: <action> — 결과: <outcome>
+   - 미확인: <what was not verified> (only when applicable)
+   - 결정 필요: <item needing the user's decision> (only when applicable)
+   Keep progress notes to one line or less. Do not list per-file change details unless asked; point to the checklist, plan document or commit instead. Never drop unverified items or decisions needed for brevity.
 
 All responses must be in Korean (except for development terminology).
 
@@ -33,7 +39,8 @@ All responses must be in Korean (except for development terminology).
 4. [Commenting] 주석 작성 시 구어체(~해요, ~입니다)를 금지하고, 짧고 명확한 문어체(~함, ~함에 따라 처리)를 사용한다. 가독성을 위해 불필요한 수식어는 생략한다.
 5. [Token Optimization] 인사말, 부연 설명, 서론 및 결론(예: '네, 알겠습니다', '다음 코드를 참고하세요' 등)을 절대 사용하지 않으며, 요청받은 결과물(코드, 플랜 등)만 즉시 출력한다.
 6. [Code Output] 코드 수정이나 제안 시, 파일 전체를 다시 출력하지 않고 변경이 필요한 부분(Diff)이나 추가할 핵심 로직만 간결하게 제공한다.
-7. [Simplicity & Clarity] 모든 답변은 간결하게 압축하여 작성하되, 핵심 내용을 직관적이고 이해하기 쉽게 전달한다. -->
+7. [Simplicity & Clarity] 모든 답변은 간결하게 압축하여 작성하되, 핵심 내용을 직관적이고 이해하기 쉽게 전달한다.
+8. [Work Report] 구현·수정 결과는 성공(작업—결과)·실패(작업—원인—조치—결과)·미확인·결정 필요 항목만 항목당 1줄로 보고한다. 진행 안내는 1줄 이하, 파일별 변경 설명은 요청 시만 쓰며, 미확인·결정 필요 항목은 압축 대상에서 제외한다. -->
 
 ## Delegation (Claude Code only; Antigravity ignores this section)
 
@@ -44,6 +51,7 @@ All responses must be in Korean (except for development terminology).
 - Non-development work that needs a lot of reading (web research, comparing sources, summarizing long documents or many files, translation, cleanup plans): use `/offload` without asking when `agy` is installed. Small tasks and system changes stay with Claude.
 - Other multi-step work (editing several files, writing and testing scripts, waiting on agy): run it in a background subagent (model sonnet; pass the needed context explicitly) so the main session can keep answering the user's questions meanwhile. One- or two-command tasks, destructive actions needing confirmation (format, delete), and commits/pushes stay in the main session. The subagent never commits or pushes and returns policy questions instead of deciding; the main session does not edit files the subagent is working on.
 - Pre-merge review: right before merging a feature branch into the integration branch (e.g. develop), run `/code-review low` without asking. If the changed paths or diff mention auth, login, session, permission, role, payment, token, password, personal data or file upload, also run `/security-review`. Run them in a background subagent and read only the summary; report findings before merging and let the user decide what to fix. Do not run `/simplify` automatically; suggest it only when the review points to cleanup.
+- Parallel requests: when several independent tasks are requested at once, run them as concurrent subagents (max 3) only if their target files/areas do not overlap; check the expected target files of each task first. Run code tasks with worktree isolation (`isolation: worktree`) to avoid build/test collisions. Tasks touching the same file or shared component, and 1–3 line changes, run sequentially in one agent. Collect results in the [Work Report] format.
 - Exclusions (do these directly): investigation or design decisions, unclear root-cause debugging, changes of 1–3 lines, git/DB/deploy/server work, the final regression-test stage.
 - Long sessions: auto-compact (`autoCompactWindow` 160k) summarizes the context automatically; do not suggest `/handoff` because of context size. Use `/handoff` only when pausing work until a later day or moving to another PC, and `/clear` when the feature changes (plan documents and memory keep the record).
 
