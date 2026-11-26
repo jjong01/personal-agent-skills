@@ -53,7 +53,12 @@ All responses must be in Korean (except for development terminology).
 - Pre-merge review: right before merging a feature branch into the integration branch (e.g. develop), run `/code-review low` without asking. If the changed paths or diff mention auth, login, session, permission, role, payment, token, password, personal data or file upload, also run `/security-review`. Run them in a background subagent and read only the summary; report findings before merging and let the user decide what to fix. Do not run `/simplify` automatically; suggest it only when the review points to cleanup.
 - Parallel requests: when several independent tasks are requested at once, run them as concurrent subagents (max 3) only if their target files/areas do not overlap; check the expected target files of each task first. Run code tasks with worktree isolation (`isolation: worktree`) to avoid build/test collisions. Tasks touching the same file or shared component, and 1–3 line changes, run sequentially in one agent. Collect results in the [Work Report] format.
 - Exclusions (do these directly): investigation or design decisions, unclear root-cause debugging, changes of 1–3 lines, git/DB/deploy/server work, the final regression-test stage.
-- Long sessions: auto-compact (`autoCompactWindow` 160k) summarizes the context automatically; do not suggest `/handoff` because of context size. Use `/handoff` only when pausing work until a later day or moving to another PC, and `/clear` when the feature changes (plan documents and memory keep the record).
+- Session reset: never run built-in commands; recommend one in the last line of a report when it clearly helps.
+  Judge from context: 1) natural boundary? (work just finished or user stepping away) 2) what would be lost if the conversation ended now?
+  Only when considering a recommendation, verify: `git status` and unpushed commits; plan doc/checklist records the current stage and decisions; no running subagents/agy; no pending questions.
+  Before recommending `/clear`, move standing instructions given only in conversation (e.g. files never to commit, env/DB cautions) into the project CLAUDE.md or memory.
+  Nothing lost → "`/clear` 권장 — 다음 시작 문장: <plan doc path · next stage · last commit · branch>" (note "push 안 됨" if applicable). Something unrecorded → record it or `/handoff`.
+  At most once per boundary; if the user declines, do not repeat until the next boundary. Not for context size alone (auto-compact handles it). Use `/handoff` when pausing until a later day or moving to another PC.
 
 ## Environment
 
