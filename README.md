@@ -9,6 +9,7 @@ Claude Code와 Antigravity(agy)에서 함께 쓰는 개인 에이전트 공통 �
 - `skills/<분류>/<이름>/`: 사용자 스킬. 분류는 저장소 정리용이며 설치 시 도구별 `skills/<이름>`으로 평평하게 연결함(이름 중복 금지)
 - `extras/terminal-status.sh`: 작업 종료·오류·알림 시 효과음과 OS 알림(iTerm2·Ghostty·WezTerm, macOS·Windows). 설치 시 `~/.claude/hooks/`로 연결
 - `extras/statusline.sh`: 상태줄(Claude 구독·맥락·agy 할당량 사용률). 설치 시 `~/.claude/statusline.sh`로 연결, jq 필요
+- `extras/scheduled-ping/`: 평일 정시 `claude`·`agy` 호출로 사용량 구간 시작 시각을 맞추는 launchd 스크립트·plist 템플릿(macOS 전용, Windows 미지원). `./install.sh --with-ping`로 선택 설치, 절차는 가이드 13절
 - `lib/`: 스킬 공용 스크립트(`run-agy.sh`: agy 비대화 실행 래퍼, `agy-denied.py`: 권한 거부 명령 추출, `run-logged.sh`: 시험·빌드 출력을 파일로 보내고 요약만 출력). 설치 후 `~/agent/lib`
 
 | 분류 | 스킬 | 설명 |

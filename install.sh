@@ -1,13 +1,23 @@
 #!/usr/bin/env bash
 # 에이전트 작업 환경 설치: 폴더 구조, 공통 규칙(AGENTS.md) 연결, 스킬 연결
-# 사용: ./install.sh [--dry-run]
+# 사용: ./install.sh [--dry-run] [--with-ping]
+#   --with-ping: macOS 전용 정기 ping(launchd) 등록. 기본은 설치 안 함
 # 다시 실행해도 안전함. 기존 파일·폴더는 ~/.agent-skills-backup/<시각>/ 으로 옮긴 뒤 링크함
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKUP="$HOME/.agent-skills-backup/$(date +%Y%m%d-%H%M%S)"
 DRY=0
-[[ "${1:-}" == "--dry-run" ]] && DRY=1
+WITH_PING=0
+# 정기 ping 실행 시각(평일, HH:MM 공백 구분). 5시간 구간 경계에 1분씩 마진을 둔 값임
+PING_TIMES="${PING_TIMES:-06:30 11:31 16:32}"
+for arg in "$@"; do
+  case "$arg" in
+    --dry-run) DRY=1 ;;
+    --with-ping) WITH_PING=1 ;;
+    *) echo "알 수 없는 옵션: $arg" >&2; exit 2 ;;
+  esac
+done
 
 run() { if (( DRY )); then echo "[dry-run] $*"; else "$@"; fi; }
 
@@ -119,4 +129,47 @@ if [[ -d "$HOME/.claude/plugins" ]] && find "$HOME/.claude/plugins" -maxdepth 4 
   echo "ok      context-mode 플러그인"
 else
   echo "확인 필요: Claude Code에서 /plugin install context-mode@context-mode 실행"
+fi
+
+if (( WITH_PING )); then
+  echo "## 8. 정기 ping (launchd, macOS 전용)"
+  if [[ "$(uname -s)" != "Darwin" ]]; then
+    echo "건너뜀: macOS에서만 지원함"
+  else
+    link "$REPO_DIR/extras/scheduled-ping" "$HOME/agent/scheduled-ping"
+    # 평일(월~금) × PING_TIMES 항목 생성
+    schedule=""
+    for wd in 1 2 3 4 5; do
+      for t in $PING_TIMES; do
+        schedule+="        <dict><key>Weekday</key><integer>$wd</integer><key>Hour</key><integer>$((10#${t%%:*}))</integer><key>Minute</key><integer>$((10#${t##*:}))</integer></dict>"$'\n'
+      done
+    done
+    schedule="${schedule%$'\n'}"
+    uid="$(id -u)"
+    for f in "$HOME"/Library/LaunchAgents/*.claude-ping.plist "$HOME"/Library/LaunchAgents/*.agy-ping.plist; do
+      [[ -f "$f" ]] || continue
+      old="$(basename "$f" .plist)"
+      echo "경고    기존 작업 $old 존재: 중복 실행됨. 제거하지 않았으니 필요 시 직접 bootout 후 plist 삭제"
+    done
+    for n in claude agy; do
+      label="local.agent-ping.$n"
+      dest="$HOME/Library/LaunchAgents/$label.plist"
+      tpl="$REPO_DIR/extras/scheduled-ping/$n.plist.template"
+      run mkdir -p "$HOME/Library/LaunchAgents" "$HOME/Library/Logs"
+      if (( DRY )); then
+        echo "[dry-run] $tpl -> $dest (__HOME__=$HOME, 시각: $PING_TIMES)"
+      else
+        content="$(<"$tpl")"; content="${content//__SCHEDULE__/$schedule}"; content="${content//__HOME__/$HOME}"; printf '%s\n' "$content" > "$dest"
+        echo "wrote   $dest"
+      fi
+      if launchctl print "gui/$uid/$label" >/dev/null 2>&1; then
+        run launchctl bootout "gui/$uid/$label"
+      fi
+      run launchctl bootstrap "gui/$uid" "$dest"
+      echo "등록    $label"
+    done
+    security find-generic-password -a "$(id -un)" -s claude-ping-oauth >/dev/null 2>&1 \
+      && echo "ok      키체인 토큰(claude-ping-oauth) 있음" \
+      || echo "확인 필요: 키체인 토큰 없음. docs/GUIDE.md 13절 참고"
+  fi
 fi

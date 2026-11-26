@@ -204,3 +204,28 @@ agy도 같은 `SKILL.md` 형식을 읽음(전역 `~/.gemini/config/skills/<이�
 
 - 방침: 위임 계열 스킬은 agy용으로 따로 만들지 않음. `SKILL.md` 안 환경별 분기나 래퍼의 agy 내부 감지는 맥락 증가·세션 충돌 위험으로 채택하지 않음.
 - 미확인: 비대화 모드(`agy -p`)에서 내장 서브에이전트 안정성, Windows Junction 링크 스킬 인식 여부.
+
+## 13. 정기 ping (macOS 전용, 선택)
+
+- 용도: 평일 정해진 시각에 `claude`·`agy`를 1회씩 호출해 사용량 5시간 구간의 시작 시각을 맞춤. 기본 시각 06:30 / 11:31 / 16:32(구간 경계에 1분 마진)
+- 지원: macOS(launchd)만. Windows(`install.ps1`)는 미지원
+
+### 설치
+
+- `./install.sh --with-ping` (`--dry-run` 병행 가능). 시각 변경: `PING_TIMES="07:00 12:01" ./install.sh --with-ping`
+- 동작: `extras/scheduled-ping/`를 `~/agent/scheduled-ping`으로 연결, plist 템플릿의 `__HOME__`·시각을 치환해 `~/Library/LaunchAgents/local.agent-ping.{claude,agy}.plist`에 쓰고 `launchctl bootstrap gui/<uid>`로 등록(이미 있으면 bootout 후 재등록)
+- 기존 `*.claude-ping`·`*.agy-ping` 작업이 있으면 중복 실행되므로 경고만 출력함. 제거는 직접 수행
+- 모델·바이너리 경로: 각 `run-*.sh` 상단 변수(`MODEL`, `CLAUDE_BIN`, `AGY_BIN`)
+
+### 토큰 발급·키체인 등록 (Claude용)
+
+1. 별도 터미널에서 `claude setup-token` 실행 후 출력된 `sk-ant-oat01-...` 토큰 복사
+2. `security add-generic-password -U -a "$(id -un)" -s claude-ping-oauth -w` 실행 후 프롬프트에 토큰 붙여넣기
+3. 토큰이 없으면 기존 로그인 상태로 실행함(만료 시 실패 가능)
+
+### 로그·점검·교체
+
+- 로그: `~/Library/Logs/agent-ping-claude.log`, `~/Library/Logs/agent-ping-agy.log` (`exit=0`이 정상)
+- 상태: `launchctl print gui/$(id -u)/local.agent-ping.claude`
+- 토큰 만료 시: `claude setup-token`으로 재발급 후 2번 명령을 다시 실행(`-U`로 덮어씀). 재설치 불필요
+- 제거: `launchctl bootout gui/$(id -u)/local.agent-ping.<claude|agy>` 후 plist 삭제
