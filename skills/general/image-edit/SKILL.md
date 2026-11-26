@@ -35,7 +35,7 @@ S=<scratchpad>; ~/.claude/skills/image-edit/run-image.sh <원본> $S/instr.txt $
 ```
 
 - 결과는 scratchpad에 만든다(프로젝트 파일은 4단계에서 교체). 원본과 같은 경로는 거부된다.
-- 기본 모델 `gemini-3.8-flash-medium`. 글자가 많거나 1차 결과가 어긋나면 `gemini-4-argon-medium`. 한도 확인·소진 시 대체 순서는 delegate 스킬 2단계를 따른다. 실행 출력에 `AGY_NEW_MODELS`가 나오면 사용자에게 한 줄로 알리고 평가 여부를 묻는다(자동 전환 없음, delegate 스킬 "새 모델 평가 절차").
+- 모델은 `~/agent/lib/agy-pick.sh 이미지-기본` 출력의 모델을 쓴다. 글자가 많거나 1차 결과가 어긋나면 `이미지-상`. 한도 부족·소진 시 대체 순서는 스크립트가 정하며 규칙은 delegate 스킬 2단계를 따른다. 실행 출력에 `AGY_NEW_MODELS`가 나오면 사용자에게 한 줄로 알리고 평가 여부를 묻는다(자동 전환 없음, delegate 스킬 "새 모델 평가 절차").
 - 스크립트가 agy 결과(JPEG, 크기 임의)를 찾아 원본 비율로 가운데를 잘라 원본 크기·확장자 형식으로 저장한다. 새 이미지처럼 크기를 유지해야 하면 `--keep-size`.
 - 마지막 줄 `IMAGE_RESULT {...}`만 읽는다(`out`, `size`, `preview`). `ok: false`면 지시를 구체화해 1회 재시도하고, 또 실패하면 사용자에게 보고한다.
 - 소요 약 1~2분. Bash `run_in_background: true`로 실행하고 완료 알림을 기다린다.

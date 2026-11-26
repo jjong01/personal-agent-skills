@@ -7,7 +7,12 @@
 set -uo pipefail
 
 [[ $# -lt 3 ]] && { echo "usage: $0 <workdir> <instruction-file> <out-file> [model]" >&2; exit 2; }
-WORKDIR="$1"; INSTR="$2"; OUT="$3"; MODEL="${4:-gemini-3.8-flash-medium}"
+WORKDIR="$1"; INSTR="$2"; OUT="$3"; MODEL="${4:-}"
+# 모델 미지정 시 agy-pick.sh로 선택(목록 파일 기준)
+if [[ -z "$MODEL" ]]; then
+  MODEL="$("$HOME/agent/lib/agy-pick.sh" 조사-기본 | cut -f1)"
+  [[ -z "$MODEL" || "$MODEL" == QUOTA ]] && { echo "agy 한도 소진(QUOTA) 또는 모델 선택 실패: 위임 불가" >&2; exit 3; }
+fi
 [[ -d "$WORKDIR" ]] || { echo "작업 폴더 없음: $WORKDIR" >&2; exit 2; }
 [[ -f "$INSTR" ]] || { echo "지시 파일 없음: $INSTR" >&2; exit 2; }
 [[ -e "$OUT" ]] && { echo "결과 파일이 이미 있음(덮어쓰지 않음): $OUT" >&2; exit 2; }

@@ -9,10 +9,15 @@ set -uo pipefail
 
 [[ $# -lt 3 ]] && { echo "usage: $0 <ref-image> <instruction-file> <out-path> [model] [--keep-size]" >&2; exit 2; }
 REF="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"; INSTR="$2"; OUT="$3"; shift 3
-MODEL="gemini-3.8-flash-medium"; KEEP=0
+MODEL=""; KEEP=0
 for a in "$@"; do
   case "$a" in --keep-size) KEEP=1 ;; *) MODEL="$a" ;; esac
 done
+# 모델 미지정 시 agy-pick.sh로 선택(목록 파일 기준)
+if [[ -z "$MODEL" ]]; then
+  MODEL="$("$HOME/agent/lib/agy-pick.sh" 이미지-기본 | cut -f1)"
+  [[ -z "$MODEL" || "$MODEL" == QUOTA ]] && { echo "agy 한도 소진(QUOTA) 또는 모델 선택 실패: 위임 불가" >&2; exit 3; }
+fi
 [[ -f "$REF" ]] || { echo "참고 이미지 없음: $REF" >&2; exit 2; }
 [[ -e "$OUT" && "$(cd "$(dirname "$OUT")" && pwd)/$(basename "$OUT")" == "$REF" ]] && { echo "출력 경로가 원본과 같음. 원본은 덮어쓰지 않음" >&2; exit 2; }
 

@@ -90,21 +90,14 @@ run-offload.sh 호출 → agy plan 모드로 웹 검색/문서 독해 (읽기 �
 
 ## 5. agy 모델 선택 및 한도 요약
 
-`delegate` 및 `offload` 실행 시 적용되는 모델 매핑 및 한도 관리 기준:
+모델 선택의 유일한 기준은 `lib/agy-models.tsv`(설치 후 `~/agent/lib/agy-models.tsv`)의 용도 열이며, 스킬은 `~/agent/lib/agy-pick.sh <용도>`가 출력하는 모델을 그대로 쓴다. 문서에 모델 매핑을 따로 적지 않는다.
 
-| 난이도 / 용도 | 기본 모델 | 모델 성격 및 한도 규칙 |
-|---|---|---|
-| 난이도 하 | `gemini-4-hydrogen-medium` | 변경 파일 ≤3개, 명세 명확, 스타일 위주 (Gemini 공용 묶음) |
-| 난이도 중 (기본) | `gemini-3.8-flash-high` | 여러 파일 일관 수정, 비즈니스 로직, 시험 추가. 준비도 점검 겸용 |
-| 난이도 중 (비교) | `gemini-4-hydrogen-high` | flash-high 결과 비교용 또는 Argon 주간 한도 부족 시 난이도 상 대체 |
-| 난이도 상 | `gemini-4-argon-medium` | 설계 판단 필요, 점검 시 결정 항목 ≥3개. 주간 한도 별도 관리 |
-| 준비도 점검 | `gemini-3.8-flash-high` | plan 모드로 구현 전 명세 빈 곳 사전 검토 |
-| 브라우저 확인 | `gemini-3.8-flash-medium` | chrome-devtools MCP 전용, 시나리오별 통과/실패 판정 |
-| 심층/넓은 조사 | `gemini-pro-orchestrator-neon` | offload 전용: 독립 주제 3개 이상 꼼꼼한 조사 시 하위 에이전트 분할 활용 |
-| 최후 대체 | `claude-sonnet-5-5-medium` | Gemini·Argon 묶음 모두 소진 시 agy 내 Claude 묶음 활용 |
-
-- **한도 소진 시 대체 순서**: Gemini 공용(남은 양 <5%) → Argon(`gemini-4-argon-medium`) → agy Claude·GPT(`claude-sonnet-5-5-medium`).
-- **전체 소진 시**: 즉시 중단 후 사용자에게 초기화 시각 안내 (대기 또는 사용자 승인 시 Claude 직접 구현).
+- **용도 체계**: `구현-하|중|상`, `점검`(준비도), `브라우저`, `조사-기본|비교|분석|넓음`(offload), `이미지-기본|상`, `대체-1|2|3`(한도 소진 시 순서: Gemini 공용 → Argon → Claude·GPT), `평가중`, `조건부후보`, `사용안함`. 한 모델이 여러 용도면 쉼표로 적고, `묶음` 열(gemini/argon/claude-gpt)이 한도 묶음을 정한다.
+- **실행**: `agy-pick.sh 구현-중` → `<모델>\t<근거>` 1줄. 근거에 용도·묶음·남은 %가 담기며 보고에 그대로 적는다.
+- **한도 판단**: `~/.cache/agy-quota.tsv`(상태줄 5분 캐시, 환경 변수 `AGY_QUOTA_FILE`로 변경 가능)에서 묶음별 5시간·주간 중 작은 값을 쓴다. 5% 미만 소진 → 대체 순서의 다음 묶음 모델, 20% 미만 `부족` 표시. 캐시가 없거나 30분 초과, 또는 묶음 행이 없으면(Argon 등) 한도 미확인으로 tsv 선택을 그대로 쓴다.
+- **전체 소진**: `QUOTA` 출력과 종료 코드 3 → 즉시 중단 후 초기화 시각 안내(대기 또는 사용자 승인 시 Claude 직접 구현).
+- **매핑 변경·평가**: tsv 용도 열 한 줄 수정. `~/agent/notes/agy-model-log.md`에 같은 용도 통과 기록 3건 이상이면 교체 제안.
+- 현재 tsv 기준 예시(변경될 수 있음): 구현-하 `gemini-4-hydrogen-medium`, 구현-중 `gemini-4-hydrogen-high`, 구현-상 `gemini-4-argon-medium`, 점검 `gemini-3.8-flash-high`, 브라우저 `gemini-3.8-flash-medium`.
 
 ## 6. 자주 겪는 문제와 대처
 
@@ -119,7 +112,7 @@ run-offload.sh 호출 → agy plan 모드로 웹 검색/문서 독해 (읽기 �
   - 대처: 반드시 `~/agent/lib/run-logged.sh <로그> <명령...>` 래퍼를 통해 실행함.
 - **한도 소진 중단 (`QUOTA`)**:
   - 원인: 실행 도중 Gemini/Argon 할당량 소진 (남은 양 5% 미만).
-  - 대처: 변경된 파일은 유지하고, 대체 순서의 다음 모델로 "이미 수정된 파일을 이어 완성"하도록 재위임.
+  - 대처: 변경된 파일은 유지하고, `agy-pick.sh`를 다시 실행해 나온 다음 묶음 모델로 "이미 수정된 파일을 이어 완성"하도록 재위임.
 - **브라우저 확인 실패 / 로그인 불가**:
   - 원인: MCP 등록 누락 또는 테스트 계정 미지정.
   - 대처: `agy mcp add chrome-devtools npx -y chrome-devtools-mcp@1.10.1` 설치 확인. `.env` 탐색은 차단되어 있으므로 `AGENTS.md` 계정 또는 메인 세션을 통해 사용자에게 계정을 받아 진행.

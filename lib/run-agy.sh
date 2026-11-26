@@ -49,6 +49,7 @@ deny = list(perm.get("deny", []))
 # 읽기 전용 명령 기본 허용(상태를 바꾸지 않는 명령만. 접두어 일치라 하위 명령까지 적음)
 allow += [f"command({c})" for c in (
     "ls", "pwd", "cat", "head", "tail", "wc", "grep", "egrep", "rg", "find", "fd", "sed -n", "tree",
+    "mkdir -p", "mkdir",  # 작업 폴더 안 새 폴더 생성(기존 파일 변경 없음)
     "sort", "cut", "diff", "stat", "file", "basename", "dirname", "realpath", "which",
     # 환경 확인(버전 출력만)
     "java -version", "java --version", "javac -version", "mvn -v", "mvn --version", "./mvnw -v", "gradle -v", "./gradlew -v",

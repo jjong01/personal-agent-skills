@@ -1,24 +1,25 @@
-id	용도	메모
-gemini-3.8-flash-low	평가중	미사용
-gemini-3.8-flash-medium	대체	조사·이미지·브라우저 확인 기본. 구현-하는 2026-11-19부터 hydrogen-medium으로 교체
-gemini-3.8-flash-high	구현-중	준비도 점검 겸용
-gemini-4-argon-low	평가중	
-gemini-4-argon-medium	구현-상	조사(판단 어려운 분석)·이미지 어려운 경우 겸용, 대체 순서 2번
-gemini-4-argon-high	평가중	
-gemini-4-hydrogen-low	평가중	
-gemini-4-hydrogen-medium	구현-하	2026-11-19 1회: 통과 29s(flash-medium 85s), 시험 무변경, 보고 정상, 같은 Gemini 공용 묶음
-gemini-4-hydrogen-high	대체	Argon 주간 한도 부족 시 난이도 상. 난이도 중 후보: 실제 단계 1~2개 시험 후 flash-high와 비교
-gemini-4-hydrogen-xhigh	평가중	
-gemini-4-neon-low	평가중	
-gemini-4-neon-medium	평가중	2026-11-19 1회: 통과 36s, Gemini 공용 5시간 -1%. 추가 작업 평가 필요
-gemini-4-neon-high	평가중	
-gemini-4-neon-xhigh	평가중	
-gemini-pro-orchestrator-neon	조건부후보	독립 조각으로 나뉘는 작업용: 넓은 조사(offload)·여러 시나리오 브라우저 확인·파일이 겹치지 않는 기계적 수정 묶음·agy 직접 사용 큰 작업. 2026-11-19 확인: headless에서 하위 에이전트 생성됨, 권한 deny 규칙이 하위 에이전트에도 적용됨. 단일 단계 구현 75s(이점 없음). 넓은 조사 232s(flash-high 150s), 한도 약 2배, 결과는 더 상세하고 미확인 항목을 표시함 → 속도보다 꼼꼼함이 중요한 조사에만 사용. 수정 작업은 파일 겹침 확인 후 시험
-gemini-pro-orchestrator-g1-pro	조건부후보	neon 오케스트레이터와 같은 용도 후보. 한도 묶음 미확인, neon 결과가 좋을 때 평가
-claude-sonnet-5-5-low	사용안함	
-claude-sonnet-5-5-medium	대체	Gemini 묶음 소진 시 최후 대체(Claude·GPT 묶음)
-claude-sonnet-5-5-high	사용안함	
-claude-opus-5-5-low	사용안함	본 세션과 역할 중복
-claude-opus-5-5-medium	사용안함	본 세션과 역할 중복
-claude-opus-5-5-high	사용안함	본 세션과 역할 중복
-gpt-oss-120b-medium	평가중	
+#용도 체계(쉼표로 복수 지정, 용도 값은 agy-pick.sh 인자): 구현-하|구현-중|구현-상, 점검(준비도), 브라우저, 조사-기본|조사-비교|조사-분석|조사-넓음, 이미지-기본|이미지-상, 대체-1|대체-2|대체-3(한도 소진 시 순서: gemini→argon→claude-gpt), 조건부후보|평가중|사용안함
+id	용도	묶음	메모
+gemini-3.8-flash-low	평가중	gemini	미사용
+gemini-3.8-flash-medium	조사-기본,브라우저,이미지-기본	gemini	구현-하는 2026-11-19부터 hydrogen-medium으로 교체. 요약·번역·단순 조사, 이미지, 브라우저 확인 기본
+gemini-3.8-flash-high	대체-1,점검,조사-비교	gemini	구현-중 기본이었으나 2026-11 hydrogen-high로 교체(사용자 승인), 이후 대체-1. 준비도 점검·여러 자료 비교·긴 문서·정리안 겸용
+gemini-4-argon-low	평가중	argon	
+gemini-4-argon-medium	구현-상,조사-분석,이미지-상,대체-2	argon	조사(판단 어려운 분석, 글 품질이 중요한 초안)·이미지 어려운 경우 겸용. Argon 주간 한도 별도 묶음
+gemini-4-argon-high	평가중	argon	
+gemini-4-hydrogen-low	평가중	gemini	
+gemini-4-hydrogen-medium	구현-하	gemini	2026-11-19 1회: 통과 29s(flash-medium 85s), 시험 무변경, 보고 정상, 같은 Gemini 공용 묶음
+gemini-4-hydrogen-high	구현-중	gemini	2026-11 구현-중 기본으로 승인. Argon 주간 한도 부족 시 구현-상 임시 대체 후보(사용자 확인)
+gemini-4-hydrogen-xhigh	평가중	gemini	
+gemini-4-neon-low	평가중	gemini	
+gemini-4-neon-medium	평가중	gemini	2026-11-19 1회: 통과 36s, Gemini 공용 5시간 -1%. 추가 작업 평가 필요
+gemini-4-neon-high	평가중	gemini	
+gemini-4-neon-xhigh	평가중	gemini	
+gemini-pro-orchestrator-neon	조사-넓음,조건부후보	gemini	독립 조각으로 나뉘는 작업용: 넓은 조사(offload)·여러 시나리오 브라우저 확인·파일이 겹치지 않는 기계적 수정 묶음·agy 직접 사용 큰 작업. 2026-11-19 확인: headless에서 하위 에이전트 생성됨, 권한 deny 규칙이 하위 에이전트에도 적용됨. 단일 단계 구현 75s(이점 없음). 넓은 조사 232s(flash-high 150s), 한도 약 2배, 결과는 더 상세하고 미확인 항목을 표시함 → 속도보다 꼼꼼함이 중요한 조사에만 사용. 수정 작업은 파일 겹침 확인 후 시험
+gemini-pro-orchestrator-g1-pro	조건부후보	gemini	neon 오케스트레이터와 같은 용도 후보. 한도 묶음 미확인, neon 결과가 좋을 때 평가
+claude-sonnet-5-5-low	사용안함	claude-gpt	
+claude-sonnet-5-5-medium	대체-3	claude-gpt	Gemini·Argon 묶음 소진 시 최후 대체(Claude·GPT 묶음, Antigravity 구독 한도로 Claude Code와 별개)
+claude-sonnet-5-5-high	사용안함	claude-gpt	
+claude-opus-5-5-low	사용안함	claude-gpt	본 세션과 역할 중복
+claude-opus-5-5-medium	사용안함	claude-gpt	본 세션과 역할 중복
+claude-opus-5-5-high	사용안함	claude-gpt	본 세션과 역할 중복
+gpt-oss-120b-medium	평가중	claude-gpt	
