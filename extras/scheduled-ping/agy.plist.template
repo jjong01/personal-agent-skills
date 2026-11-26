@@ -11,7 +11,7 @@
     </array>
 
     <key>WorkingDirectory</key>
-    <string>__HOME__/agent/scheduled-ping</string>
+    <string>__HOME__/Library/Logs</string>
 
     <key>EnvironmentVariables</key>
     <dict>
