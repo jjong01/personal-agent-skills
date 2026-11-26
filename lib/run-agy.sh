@@ -92,6 +92,8 @@ if [[ -n "${AGY_ADD_DIRS:-}" ]]; then
   for d in "${_dirs[@]}"; do [[ -n "$d" ]] && ADD+=(--add-dir "$d"); done
 fi
 # CLI 로그 선택 기준: 이 시각 이후 생성 + 작업 폴더 일치(동시 실행 경합 방지)
+# 실행 전 사용량(상태줄 캐시)을 보관해 실행 후 값과 함께 로그에 남김
+QBEFORE="$(cat "${AGY_QUOTA_FILE:-$HOME/.cache/agy-quota.tsv}" 2>/dev/null)"
 START="$(date +%s)"
 agy --mode "$MODE" --model "$MODEL" --settings "$SETTINGS" "${ADD[@]+"${ADD[@]}"}" -p "$(cat "$PROMPT")" > "$LOG" 2>&1
 code=$?
@@ -102,11 +104,9 @@ if [[ -n "$DENIED" ]]; then
   printf '%s\n' "$DENIED" >> "$LOG"
 elif grep -q 'no output produced' "$LOG"; then
   echo "AGY_DENIED: (명령 확인 불가) 보고 없이 중단됨. ~/.gemini/antigravity-cli/log 확인 필요" >> "$LOG"
-elif ! grep -qF "${AGY_REPORT_MARK:-=== REPORT ===}" "$LOG"; then
-  # 보고 없이 끝나면 한도 소진 여부 판단용 사용량을 덧붙임
-  echo "AGY_USAGE:" >> "$LOG"
-  agy -p "/usage" 2>&1 | head -8 >> "$LOG"
 fi
+# 사용량 전후 기록(보고 작성용, 보고 없이 끝난 경우 한도 소진 판단용)
+{ echo "AGY_USAGE_BEFORE (캐시):"; printf '%s\n' "$QBEFORE"; echo "AGY_USAGE:"; agy -p "/usage" 2>&1 | head -8; } >> "$LOG"
 # agy-models.tsv에 없는 모델이 목록에 생기면 로그 끝에 알림(모델 자동 전환은 하지 않음)
 if [[ -f "$SELF_DIR/agy-models.tsv" ]]; then
   NEW_MODELS="$(printf '%s\n' "$MODELS_OUT" | awk '{print $1}' | grep -v '^$' \
