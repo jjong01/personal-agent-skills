@@ -1,0 +1,31 @@
+# 에이전트 작업자(agy·Grok) 공통 차단 명령 접두사. 한 줄에 하나, # 은 주석
+# 원본: run-agy.sh(--settings), install.sh(agy 전역 settings·Grok config.toml)가 읽음
+git commit
+git push
+git reset
+git checkout
+git switch
+git rebase
+git merge
+git stash
+git clean
+git branch -d
+git branch -D
+git branch --delete
+git branch -m
+git branch -M
+git branch --move
+git branch -f
+git branch --force
+git branch -c
+git branch -C
+git branch --copy
+sort -o
+sort --output
+rm -rf
+sudo
+mysql
+mariadb
+ssh
+scp
+rsync

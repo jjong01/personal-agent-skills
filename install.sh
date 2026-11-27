@@ -49,6 +49,45 @@ link "$REPO_DIR/global/AGENTS.md" "$HOME/agent/AGENTS.md"
 link "$HOME/agent/AGENTS.md" "$HOME/.claude/CLAUDE.md"
 link "$HOME/agent/AGENTS.md" "$HOME/.gemini/GEMINI.md"
 
+echo "## 2-1. Grok (설치된 PC만)"
+if [[ -d "$HOME/.grok" || -x "$HOME/.grok/bin/grok" ]] || command -v grok >/dev/null 2>&1; then
+  link "$HOME/agent/AGENTS.md" "$HOME/.grok/AGENTS.md"
+  grok_cfg="$HOME/.grok/config.toml"
+  if [[ -f "$grok_cfg" ]] && grep -qE '^\[skills\][[:space:]]*(#.*)?$' "$grok_cfg"; then
+    skills_sec="$(awk '/^\[skills\]([[:space:]]*(#.*)?)?$/{f=1;next} /^\[/{f=0} f' "$grok_cfg")"
+    ignore_lines="$(grep -E '^[[:space:]]*ignore[[:space:]]*=' <<< "$skills_sec" || true)"
+    if [[ "$ignore_lines" == *delegate* && "$ignore_lines" == *offload* && "$ignore_lines" == *image-edit* ]]; then
+      echo "ok      Grok 스킬 제외 설정"
+    else
+      echo "확인 필요: ~/.grok/config.toml [skills] ignore에 ~/.claude/skills/delegate, offload, image-edit 추가"
+    fi
+  else
+    if [[ -f "$grok_cfg" ]]; then
+      run mkdir -p "$BACKUP/.grok"
+      run cp "$grok_cfg" "$BACKUP/.grok/config.toml"
+      echo "backup  $grok_cfg -> $BACKUP/.grok/config.toml"
+    else
+      run mkdir -p "$HOME/.grok"
+    fi
+    if (( DRY )); then
+      echo "[dry-run] $grok_cfg 에 [skills] ignore 추가"
+    else
+      if [[ -s "$grok_cfg" ]]; then
+        [[ -z "$(tail -c 1 "$grok_cfg" 2>/dev/null || true)" ]] || printf '\n' >> "$grok_cfg"
+        printf '\n' >> "$grok_cfg"
+      fi
+      cat <<'EOF' >> "$grok_cfg"
+[skills]
+# Claude Code 전용 스킬(agy 위임)은 Grok에서 제외
+ignore = ["~/.claude/skills/delegate", "~/.claude/skills/offload", "~/.claude/skills/image-edit"]
+EOF
+      echo "wrote   $grok_cfg"
+    fi
+  fi
+else
+  echo "skip    Grok 없음"
+fi
+
 echo "## 3. 스킬 (skills/<분류>/<이름> → 도구별 skills/<이름>)"
 # 저장소에서 사라진 스킬을 가리키는 링크 정리(폴더 구조 변경·이름 변경 대비)
 for dir in "$HOME/.claude/skills" "$HOME/.gemini/config/skills"; do
@@ -91,6 +130,21 @@ else
   "$PY" -I "$REPO_DIR/lib/merge-settings.py" "$REPO_DIR/settings/agy.json" "$HOME/.gemini/antigravity-cli/settings.json" "${DRYFLAG[@]+"${DRYFLAG[@]}"}"
 fi
 
+echo "## 5-1. 작업자 안전 제한 (Orca가 띄우는 agy·Grok, run-agy.sh 공통: lib/safety-deny.txt)"
+if [[ -z "$PY" ]]; then
+  echo "python 없음: 안전 제한 건너뜀"
+else
+  safety_tmp="$(mktemp)"
+  "$PY" -I "$REPO_DIR/lib/apply-safety-deny.py" agy-json > "$safety_tmp"
+  "$PY" -I "$REPO_DIR/lib/merge-settings.py" "$safety_tmp" "$HOME/.gemini/antigravity-cli/settings.json" "${DRYFLAG[@]+"${DRYFLAG[@]}"}"
+  rm -f "$safety_tmp"
+  if [[ -d "$HOME/.grok" || -x "$HOME/.grok/bin/grok" ]] || command -v grok >/dev/null 2>&1; then
+    "$PY" -I "$REPO_DIR/lib/apply-safety-deny.py" grok "$HOME/.grok/config.toml" "${DRYFLAG[@]+"${DRYFLAG[@]}"}"
+  else
+    echo "skip    Grok 없음"
+  fi
+fi
+
 echo "## 6. 도구 확인"
 missing=()
 for t in claude agy node git jq lsd bat rg fd zoxide delta; do
@@ -108,7 +162,7 @@ fi
 
 echo "## 7. 점검"
 warn=0
-for l in "$HOME/agent/AGENTS.md" "$HOME/agent/lib" "$HOME/.claude/CLAUDE.md" "$HOME/.gemini/GEMINI.md" "$HOME"/.claude/skills/* "$HOME"/.gemini/config/skills/* "$HOME"/.claude/agents/*.md; do
+for l in "$HOME/agent/AGENTS.md" "$HOME/agent/lib" "$HOME/.claude/CLAUDE.md" "$HOME/.gemini/GEMINI.md" "$HOME/.grok/AGENTS.md" "$HOME"/.claude/skills/* "$HOME"/.gemini/config/skills/* "$HOME"/.claude/agents/*.md; do
   [[ -L "$l" && ! -e "$l" ]] && { echo "깨진 링크: $l"; warn=1; }
 done
 (( warn )) || echo "ok      링크 정상"

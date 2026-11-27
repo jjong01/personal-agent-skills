@@ -46,7 +46,8 @@ def main():
         rel = os.path.relpath(os.path.abspath(dst), home)
         bdst = os.path.join(home, ".agent-skills-backup", time.strftime("%Y%m%d-%H%M%S"), rel)
         os.makedirs(os.path.dirname(bdst), exist_ok=True)
-        shutil.copy2(dst, bdst); print(f"backup  {dst} -> {bdst}")
+        if not os.path.exists(bdst):  # 같은 초 안 재실행 시 최초 백업 보존
+            shutil.copy2(dst, bdst); print(f"backup  {dst} -> {bdst}")
     os.makedirs(os.path.dirname(os.path.abspath(dst)), exist_ok=True)
     tmp = dst + ".tmp"
     with open(tmp, "w", encoding="utf-8", newline="\n") as f:

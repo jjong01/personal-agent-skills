@@ -33,7 +33,7 @@ Claude Code와 Antigravity(agy)를 연계한 개인 에이전트 작업 환경�
 | `skills/<분류>/<이름>/` | `~/.claude/skills/<이름>` | 도구별 평평한 구조로 링크 (`.claude-only` 제외 시 `~/.gemini/config/skills/<이름>`에도 연결) |
 | `agents/*.md` | `~/.claude/agents/*.md` | Claude 서브에이전트 정의 (`stage-runner.md`) |
 | `lib/` | `~/agent/lib` | 스킬 공용 스크립트 (`run-agy.sh`, `run-logged.sh`, `agy-denied.py` 등) |
-| `extras/statusline.sh` | `~/.claude/statusline.sh` | 구독·맥락·할당량 표시 상태줄 (jq 필요) |
+| `extras/statusline.sh` | `~/.claude/statusline.sh` | 구독·맥락·할당량·Grok 주간 사용률 표시 상태줄 (jq 필요, Grok 사용량은 `grok usage --json` 지원 시 표시) |
 | `extras/terminal-status.sh` | `~/.claude/hooks/terminal-status.sh` | 작업 종료·오류·알림 터미널 효과음/OS 알림 |
 | `settings/` | `~/.claude/settings.json`, `~/.gemini/.../settings.json` | 공용 설정을 기기 설정에 병합 (기존 값 유지) |
 
@@ -198,6 +198,7 @@ agy도 같은 `SKILL.md` 형식을 읽음(전역 `~/.gemini/config/skills/<이�
 
 - 방침: 위임 계열 스킬은 agy용으로 따로 만들지 않음. `SKILL.md` 안 환경별 분기나 래퍼의 agy 내부 감지는 맥락 증가·세션 충돌 위험으로 채택하지 않음.
 - 미확인: 비대화 모드(`agy -p`)에서 내장 서브에이전트 안정성, Windows Junction 링크 스킬 인식 여부.
+- Orca 작업자 안전 제한: Orca가 띄우는 agy·Grok은 `--settings`가 없어 전역 설정이 적용됨. `install.sh` 5-1절이 `lib/safety-deny.txt`(git 상태 변경·`rm -rf`·`sudo`·DB·ssh 계열 명령 접두사 단일 원본)를 agy 전역 `settings.json`(`command(...)`, `.env` 명령 regex, `~/dev` 아래 `.env` 파일 `read_file`)과 Grok `~/.grok/config.toml [permission] deny`(`Bash(<접두사>*)`, `Read(**/.env)`, `Read(**/.env.*)`)에 병합함(멱등, `--dry-run` 지원). `run-agy.sh`도 같은 파일을 읽어 `--settings`에 넣으므로 stage-runner 경로와 Orca 경로의 제한이 같음. 새 `~/dev` 프로젝트의 `.env`는 `install.sh` 재실행으로 반영.
 
 ## 13. 정기 ping (macOS 전용, 선택)
 

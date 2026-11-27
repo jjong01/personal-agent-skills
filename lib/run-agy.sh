@@ -36,7 +36,7 @@ fi
 PY="$(command -v python3 || command -v python || true)"
 [[ -z "$PY" ]] && { echo "python3(또는 python)이 필요함" >&2; exit 2; }
 
-SETTINGS="$("$PY" -I - "$REPO" "$GLOBAL" "$@" <<'EOF'
+SETTINGS="$(SELF_DIR="$SELF_DIR" "$PY" -I - "$REPO" "$GLOBAL" "$@" <<'EOF'
 import json, os, sys
 repo, glob_path, extra = os.path.realpath(sys.argv[1]), sys.argv[2], sys.argv[3:]
 perm = {}
@@ -44,6 +44,7 @@ try:
     perm = json.load(open(glob_path)).get("permissions", {})
 except Exception:
     pass
+safety = [l.strip() for l in open(os.path.join(os.environ["SELF_DIR"], "safety-deny.txt"), encoding="utf-8") if l.strip() and not l.lstrip().startswith("#")]
 allow = list(perm.get("allow", []))
 deny = list(perm.get("deny", []))
 # 읽기 전용 명령 기본 허용(상태를 바꾸지 않는 명령만. 접두어 일치라 하위 명령까지 적음)
@@ -69,10 +70,7 @@ if os.environ.get("AGY_BROWSER") == "1":
     urls = os.environ.get("AGY_BROWSER_URLS", "http://localhost http://127.0.0.1 about:blank").split()
     allow += [f"execute_url({u})" for u in urls]
 # 상태 변경·위험 명령 차단
-deny += [f"command({c})" for c in (
-    "git commit", "git push", "git reset", "git checkout", "git switch", "git rebase",
-    "git merge", "git stash", "git clean", "git branch -d", "git branch -D", "git branch --delete",
-    "git branch -m", "git branch -M", "git branch --move", "git branch -f", "git branch --force", "git branch -c", "git branch -C", "git branch --copy", "sort -o", "sort --output", "rm -rf", "sudo", "mysql", "mariadb", "ssh", "scp", "rsync")]
+deny += [f"command({c})" for c in safety]
 # 저장소 안 .env 파일 읽기 차단(예시 파일 제외)
 for root, dirs, files in os.walk(repo):
     # 깊이 제한 없이 탐색함(모노레포 하위 패키지 .env 포함). 대용량 산출물 폴더만 제외
