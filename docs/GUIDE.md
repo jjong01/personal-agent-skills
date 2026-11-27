@@ -210,6 +210,7 @@ agy도 같은 `SKILL.md` 형식을 읽음(전역 `~/.gemini/config/skills/<이�
 - 동작: `extras/scheduled-ping/`를 `~/agent/scheduled-ping`으로 연결, plist 템플릿의 `__HOME__`·시각을 치환해 `~/Library/LaunchAgents/local.agent-ping.{claude,agy}.plist`에 쓰고 `launchctl bootstrap gui/<uid>`로 등록(이미 있으면 bootout 후 재등록)
 - 기존 `*.claude-ping`·`*.agy-ping` 작업이 있으면 중복 실행되므로 경고만 출력함. 제거는 직접 수행
 - 모델·바이너리 경로: 각 `run-*.sh` 상단 변수(`MODEL`, `CLAUDE_BIN`, `AGY_BIN`)
+- 대상 아님: Grok Build CLI는 주간 한도만 있고 5시간 구간이 없어 ping 효과가 없음(한도만 소모). 2026-11-27 확인
 
 ### 토큰 발급·키체인 등록 (Claude용)
 
