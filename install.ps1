@@ -82,6 +82,7 @@ foreach ($d in @("$H\dev", "$H\agent\system", "$H\agent\storage", "$H\agent\note
 
 Write-Host '## 2. 공통 규칙'
 New-Link (Join-Path $Repo 'global\AGENTS.md') "$H\agent\AGENTS.md"
+New-Link (Join-Path $Repo 'global\delegation.md') "$H\agent\delegation.md"
 if ($DryRun -and -not (Test-Path "$H\agent\AGENTS.md")) {
     Write-Host "[dry-run] link $H\.claude\CLAUDE.md -> $H\agent\AGENTS.md"
     Write-Host "[dry-run] link $H\.gemini\GEMINI.md -> $H\agent\AGENTS.md"
@@ -166,7 +167,7 @@ if ($missing.Count -gt 0) {
 
 Write-Host '## 7. 점검'
 $broken = @()
-$checks = @("$H\agent\AGENTS.md", "$H\agent\lib", "$H\.claude\CLAUDE.md", "$H\.gemini\GEMINI.md")
+$checks = @("$H\agent\AGENTS.md", "$H\agent\delegation.md", "$H\agent\lib", "$H\.claude\CLAUDE.md", "$H\.gemini\GEMINI.md")
 foreach ($dir in @("$H\.claude\skills", "$H\.gemini\config\skills", "$H\.claude\agents")) {
     if (Test-Path -LiteralPath $dir) { $checks += @(Get-ChildItem -LiteralPath $dir -Force | ForEach-Object { $_.FullName }) }
 }

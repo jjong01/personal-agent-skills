@@ -46,6 +46,7 @@ done
 
 echo "## 2. 공통 규칙"
 link "$REPO_DIR/global/AGENTS.md" "$HOME/agent/AGENTS.md"
+link "$REPO_DIR/global/delegation.md" "$HOME/agent/delegation.md"
 link "$HOME/agent/AGENTS.md" "$HOME/.claude/CLAUDE.md"
 link "$HOME/agent/AGENTS.md" "$HOME/.gemini/GEMINI.md"
 
@@ -168,7 +169,7 @@ fi
 
 echo "## 7. 점검"
 warn=0
-for l in "$HOME/agent/AGENTS.md" "$HOME/agent/lib" "$HOME/.claude/CLAUDE.md" "$HOME/.gemini/GEMINI.md" "$HOME/.grok/AGENTS.md" "$HOME"/.claude/skills/* "$HOME"/.gemini/config/skills/* "$HOME"/.claude/agents/*.md; do
+for l in "$HOME/agent/AGENTS.md" "$HOME/agent/delegation.md" "$HOME/agent/lib" "$HOME/.claude/CLAUDE.md" "$HOME/.gemini/GEMINI.md" "$HOME/.grok/AGENTS.md" "$HOME"/.claude/skills/* "$HOME"/.gemini/config/skills/* "$HOME"/.claude/agents/*.md; do
   [[ -L "$l" && ! -e "$l" ]] && { echo "깨진 링크: $l"; warn=1; }
 done
 (( warn )) || echo "ok      링크 정상"

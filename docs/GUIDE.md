@@ -4,14 +4,18 @@ Claude Code와 Antigravity(agy)를 연계한 개인 에이전트 작업 환경�
 
 ## 1. 구성 개요
 
-| 역할 | 담당 | 하는 일 |
+역할은 작업 종류로 한 번만 정의해 Orca 안팎에서 동일하게 적용하며, 실행 경로만 환경별로 다름(Orca 세션: `orchestration` 스킬 `worker-start`, Orca 밖: `stage-runner`·`agy -p`·`grok -p`).
+
+| 작업 종류 | 담당 | 비고 |
 |---|---|---|
-| 메인 세션 | Claude Code (Opus) | 계획·설계 판단, 사용자 질의응답, 결과 검토, 커밋·push 승인 |
-| stage-runner | Claude 서브에이전트 (Sonnet) | 계획 문서의 한 단계를 delegate 절차로 끝까지 처리하고 결과 요약만 반환 |
-| 백그라운드 작업자 | Claude 서브에이전트 (Sonnet) | 다단계 스크립트 작성·테스트·검토 등 병렬 처리 (메인 대화 지속 가능) |
-| agy | Antigravity CLI (Gemini 등) | 코드 구현, 빌드·시험 수정, 대량 자료 조사, 브라우저 조작, 이미지 생성 |
+| 계획·판단·질문·diff/시험 로그 검토·체크리스트·커밋 | Claude 메인 (Opus) | 사용자 질의응답 및 최종 승인 |
+| 확정 명세 구현·시험 수정·조사(`/offload`)·이미지 | agy | Orca: `worker-start --agent antigravity`, 밖: `stage-runner`(Sonnet) 경유 `run-agy.sh` |
+| 브라우저 확인 (앱 서버 실행·재실행 포함) | 구현과 별도의 agy 작업자 | 화면 변경 계획 마지막 구현 커밋 후 1회 기본 실행(Playwright 일괄) |
+| 병합 직전 교차 리뷰·의견 요청 | Grok (읽기 전용) | 의견 요청은 agy·Grok 병렬 실행 후 종합 |
+| 비제품 다단계 작업 (문서·리뷰·스크립트·설정·agy 대기) | Claude 백그라운드 서브에이전트 (Sonnet) | 메인 대화 유지; 모든 agy 한도 소진 시 코드 작업도 담당 |
 
 - **세션 원칙**: 메인 세션 맥락에 대량 코드·빌드 로그·웹 문서·이미지를 넣지 않음. 긴 대화는 160k 자동 요약(`autoCompactWindow`), 기능 전환 시 `/clear`.
+- **규칙 분리·import**: 공용 규칙은 `global/AGENTS.md`, Claude 전용 위임 세부(서버 PID 소유·Playwright 일괄 확인·시험 데이터·운영 세부)는 `global/delegation.md`로 분리해 `AGENTS.md` 끝의 `@~/agent/delegation.md`로 Claude Code만 읽게 함(agy·Grok은 일반 텍스트로 무시).
 - **기록 유지**: 중요한 결정은 계획 문서와 Claude 메모리에 기록해 세션 요약·초기화 후에도 유지함.
 
 ## 2. 폴더 구성 및 링크 관계
@@ -24,12 +28,14 @@ Claude Code와 Antigravity(agy)를 연계한 개인 에이전트 작업 환경�
   - `notes/`: 조사 보고서, 비교 분석, 기술 문서 (하위 `notes/handoff/`: 세션 인계 메모).
   - `lib/`: 저장소 `lib/`의 링크 (공용 실행 스크립트 모음).
   - `AGENTS.md`: 저장소 `global/AGENTS.md`의 링크 (전역 공통 규칙).
+  - `delegation.md`: 저장소 `global/delegation.md`의 링크 (Claude Code 전용 위임 세부 규칙).
 
 ### 원본 및 링크 관계
 | 원본 경로 (`personal-agent-skills`) | 연결 경로 | 설명 |
 |---|---|---|
-| `global/AGENTS.md` | `~/agent/AGENTS.md` | 공통 전역 규칙 (아래 두 파일의 원본) |
-| `~/agent/AGENTS.md` | `~/.claude/CLAUDE.md`, `~/.gemini/GEMINI.md` | Claude Code 및 agy에 동일 규칙 적용 |
+| `global/AGENTS.md` | `~/agent/AGENTS.md` | 공통 전역 규칙 (아래 도구 설정 파일의 원본) |
+| `global/delegation.md` | `~/agent/delegation.md` | Claude Code 전용 위임 세부 규칙 (`AGENTS.md`에서 `@~/agent/delegation.md`로 import; agy·Grok은 무시) |
+| `~/agent/AGENTS.md` | `~/.claude/CLAUDE.md`, `~/.gemini/GEMINI.md`, `~/.grok/AGENTS.md` | Claude Code·agy·Grok(설치 시)에 동일 규칙 적용 |
 | `skills/<분류>/<이름>/` | `~/.claude/skills/<이름>` | 도구별 평평한 구조로 링크 (`.claude-only` 제외 시 `~/.gemini/config/skills/<이름>`에도 연결) |
 | `agents/*.md` | `~/.claude/agents/*.md` | Claude 서브에이전트 정의 (`stage-runner.md`) |
 | `lib/` | `~/agent/lib` | 스킬 공용 스크립트 (`run-agy.sh`, `run-logged.sh`, `agy-denied.py` 등) |
@@ -65,11 +71,11 @@ Claude Code와 Antigravity(agy)를 연계한 개인 에이전트 작업 환경�
 [커밋 승인] 메인 세션: 사용자 승인 확인 후 /commit 실행 (경계 시 /clear 추천)
     │
     ▼
-[화면 확인] 마지막 단계 완료 후: 메인이 확인 항목표(위치·동작·기대 결과) 제공 → 사용자 직접 확인
-    │       (agy 브라우저 확인은 사용자 요청 시만. 느려서 기본에서 제외)
+[화면 확인] 화면 변경 계획의 마지막 구현 커밋 후: 별도 agy 작업자로 Playwright 일괄 확인 1회 기본 실행
+    │       (브라우저 전용 항목 한정, 세부 규칙은 delegation.md; 화면 변경 없으면 생략, 그 외 항목은 사용자 수동 확인 표 제공)
     │
     ▼
-[병합 전 검토] 메인/서브에이전트: /code-review low 실행, 보안·인증 변경 시 /security-review 병행
+[병합 전 검토] 메인/서브에이전트: /code-review low(보안·인증 등 변경 시 /security-review 병행) + Grok 읽기 전용 교차 리뷰(시범)
     │
     ▼
 [브랜치 병합] 검토 보고 확인 후 feature 브랜치를 대상 브랜치(develop 등)에 병합

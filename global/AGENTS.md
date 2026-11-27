@@ -42,29 +42,30 @@ All responses must be in Korean (except for development terminology).
 7. [Simplicity & Clarity] 모든 답변은 간결하게 압축하여 작성하되, 핵심 내용을 직관적이고 이해하기 쉽게 전달한다.
 8. [Work Report] 구현·수정 결과는 성공(작업—결과)·실패(작업—원인—조치—결과)·미확인·결정 필요 항목만 항목당 1줄로 보고한다. 진행 안내는 1줄 이하, 파일별 변경 설명은 요청 시만 쓰며, 미확인·결정 필요 항목은 압축 대상에서 제외한다. -->
 
-## Delegation (Claude Code only; Antigravity ignores this section)
+## Delegation (Claude Code only; Antigravity/Grok ignore this section)
 
-- Implement stages of a finalized plan doc without asking: run `stage-runner` (Orca: orchestration worker) and read only its report. Main session: planning, user questions, commits.
-- Ad-hoc implementation (no plan doc): when spec is clear and 2+ files change, run `stage-runner` (Orca: orchestration worker) without asking, passing the request as spec. Decide design questions first, then delegate implementation.
-- On `QUESTIONS`, ask the user and rerun `stage-runner` with the answers. On `STAGE REPORT`, summarize and get approval before committing.
-- Plan doc sync before commit: if a plan doc exists for current work, verify implemented items are checked off (with date) before every commit—including main-session edits, screen-check fixes, and unplanned changes (add an item); update and include it in the commit.
-- Use `/delegate` (via stage-runner) without asking for many mechanical fixes with a known cause.
-- Inside an Orca session (`ORCA_TERMINAL_HANDLE` or `ORCA_CLI_COMMAND` set, or Orca chat): handle implementation, `/delegate`, `/offload`, and agy/Grok opinion requests via the `orchestration` skill (`worker-start`, `antigravity` default for implementation); for opinion requests, start read-only workers per agent (`antigravity`, `grok`) in parallel and synthesize `worker_done` reports. Conductor reviews diffs, runs tests, updates checklist, and records agy usage. Outside Orca: use `stage-runner` as above, and run `agy -p`/`grok -p` directly for opinion requests. PreToolUse hook (`orca-guard.sh`) blocks direct `stage-runner` and `agy`/`grok -p` runs in Orca; `install.sh` global settings apply safety limits (git state changes, rm -rf, DB/ssh, .env reads) to both paths.
-- Screen verification: after the last implementation stage is committed, give the user a manual check table (screen location · action · expected result, by plan stage/checklist item) and record "브라우저 확인: 사용자 직접 확인 예정" in the checklist. Verify logic with API/unit tests, not the browser. Run agy browser verification via stage-runner (Orca: orchestration worker) only when the user explicitly asks; then use the project's local test accounts (ask the user if missing) and re-check only failed items. Do not verify with Claude browser tools in the main session.
-- Reading-heavy non-dev work (web research, comparing sources, summarizing long docs/many files, translation, cleanup plans): use `/offload` without asking when `agy` is installed. Small tasks and system changes stay with Claude.
-- Other multi-step non-product work (docs, plans, reviews, scripts, config, waiting on agy), or code when all agy quotas are exhausted: run in a background subagent (sonnet; pass needed context) so the main session keeps answering. 1–2 command tasks, destructive confirmations (format, delete), and commits/pushes stay in main. Subagent never commits/pushes and returns policy questions; main does not edit files it is working on.
-- Pre-merge review: right before merging a feature branch into the integration branch (e.g. develop), run `/code-review low` without asking. If the changed paths or diff mention auth, login, session, permission, role, payment, token, password, personal data or file upload, also run `/security-review`. Run them in a background subagent and read only the summary; report findings before merging and let the user decide what to fix. Run `/simplify` only by suggestion.
-- Parallel requests: when several independent tasks are requested at once, run them as concurrent subagents (max 3) only if their target files/areas do not overlap. Run code tasks with worktree isolation (`isolation: worktree`) to avoid build/test collisions. Tasks touching the same file or shared component, and 1–3 line changes, run sequentially in one agent.
-- Model notice: for work delegated to stage-runner/agy, do not recommend a Claude model; before starting, state agy quota in one line from `~/.cache/agy-quota.tsv` (Gemini 5h/weekly remaining), and relay the agy model and quota change from the STAGE REPORT when summarizing it.
-  For Claude-only work, name the recommended model (opus/sonnet/haiku). If it matches the current model, proceed; otherwise wait for the user to switch, suggesting `/clear` first in a long session (switching models rebuilds the prompt cache).
-- Main session code edits: only changes of 1–3 lines; anything larger goes to stage-runner (agy).
-- Exclusions (do these directly): investigation or design decisions, unclear root-cause debugging, changes of 1–3 lines, git/DB/deploy/server work, the final regression-test stage.
-- Session reset: never run built-in commands; recommend one in the last line of a report when it clearly helps.
-  Judge from context: 1) natural boundary? (work just finished or user stepping away) 2) what would be lost if the conversation ended now?
-  Only when considering a recommendation, verify: `git status` and unpushed commits; plan doc/checklist records the current stage and decisions; no running subagents/agy; no pending questions.
-  Before recommending `/clear`, move standing instructions given only in conversation (e.g. files never to commit, env/DB cautions) into the project CLAUDE.md or memory.
-  Nothing lost → "`/clear` 권장 — 다음 시작 문장: <plan doc path · next stage · last commit · branch>" (note "push 안 됨" if applicable). Something unrecorded → record it or `/handoff`.
-  At most once per boundary; if the user declines, do not repeat until the next boundary. Not for context size alone (auto-compact handles it). Use `/handoff` when pausing until a later day or moving to another PC.
+Same role mapping inside and outside Orca; only the execution path differs.
+
+| Work type | Owner |
+|---|---|
+| Planning, decisions, user questions, diff/test log review, checklist, commits | Claude main |
+| Finalized-spec implementation, test fixes, research (`/offload`), images | agy |
+| Browser verification (including app server start/restart) | Separate agy worker (not the implementer) |
+| Pre-merge cross-review, opinion requests | Grok (read-only); opinion requests run agy + Grok in parallel |
+
+- Execution path: Orca session (`ORCA_TERMINAL_HANDLE` or `ORCA_CLI_COMMAND` set, or Orca chat) → `orchestration` skill `worker-start` (`--agent antigravity` / `grok`); outside Orca → `stage-runner` (agy), `agy -p`, `grok -p`. PreToolUse hook (`orca-guard.sh`) blocks direct `stage-runner` and `agy`/`grok -p` runs in Orca; `install.sh` global settings apply safety limits (git state changes, `rm -rf`, DB/ssh, `.env` reads) to both paths.
+- Implementation delegation: run finalized plan-doc stages, clear ad-hoc specs (2+ files; decide design questions first), and many known-cause mechanical fixes (`/delegate`) without asking via the execution path, reading only the report (`worker_done` / `STAGE REPORT`). On `QUESTIONS`, ask the user and rerun with answers; on report, review diffs/tests, update checklist, record agy usage, summarize, and get approval before committing.
+- Plan doc sync before commit: if a plan doc exists, verify implemented items are checked off with date before every commit (including main edits, screen-check fixes, and unplanned changes) and include the update in the commit.
+- Browser verification: for plans with UI changes, run one agy browser verification by default after committing the last implementation stage, limited to browser-only checks (layout, height jump, loading/empty states, modal placement); verify logic/data via API/unit tests. Skip when no UI changes. Provide a manual check table for other items; Claude main never uses browser tools.
+- Reading-heavy non-dev work (web research, comparing sources, summarizing long docs/many files, translation, cleanup plans): use `/offload` without asking when `agy` is installed; small tasks and system changes stay with Claude.
+- Background subagent (sonnet): use for other multi-step non-product work (docs, plans, reviews, scripts, config, waiting on agy) or code when all agy quotas are exhausted; 1–2 command tasks, destructive confirmations, and commits/pushes stay in main (subagent never commits/pushes, returns policy questions, and never edits files concurrently with main).
+- Pre-merge review: right before merging a feature branch into the integration branch (e.g. develop), run `/code-review low` (plus `/security-review` if auth, login, session, permission, role, payment, token, password, personal data, or file upload changed) in a background subagent (summary only) alongside Grok read-only cross-review (trial; decide adoption after the first run); report findings before merging and let the user decide fixes. Run `/simplify` only by suggestion.
+- Parallel requests: run up to 3 concurrent subagents only for non-overlapping files/areas (`isolation: worktree` for code); overlapping files or 1–3 line changes run sequentially in one agent.
+- Model & quota notice: for agy-delegated work, do not recommend a Claude model—state agy quota in one line from `~/.cache/agy-quota.tsv` (Gemini 5h/weekly remaining) before starting and relay model/quota change from the report. For Claude-only work, name the recommended model (`opus`/`sonnet`/`haiku`) and wait to switch if different (suggest `/clear` first in long sessions).
+- Main-session edits & exclusions: main edits 1–3 lines only (larger goes to agy). Do directly: investigation/design decisions, unclear root-cause debugging, 1–3 line edits, git/DB/deploy/server work, final regression-test stage.
+- Session reset: never run built-in commands; at a natural boundary, verify clean/recorded state (move conversation-only standing instructions to `CLAUDE.md`/memory first) and recommend `/clear` (with next-session starter) or `/handoff` (across days/PCs) once per boundary when helpful—not for context size alone.
+
+@~/agent/delegation.md
 
 ## Environment
 
