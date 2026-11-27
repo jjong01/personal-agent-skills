@@ -64,6 +64,17 @@
     "refreshInterval": 60
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Agent|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/orca-guard.sh"
+          }
+        ]
+      }
+    ],
     "Notification": [
       {
         "hooks": [

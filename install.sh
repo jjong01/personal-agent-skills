@@ -113,6 +113,7 @@ echo "## 3-1. 공용 스크립트"
 link "$REPO_DIR/lib" "$HOME/agent/lib"
 link "$REPO_DIR/extras/statusline.sh" "$HOME/.claude/statusline.sh"   # 상태줄(구독·맥락·agy 할당량 사용률)
 link "$REPO_DIR/extras/terminal-status.sh" "$HOME/.claude/hooks/terminal-status.sh"   # 터미널별 효과음·알림 훅
+link "$REPO_DIR/extras/orca-guard.sh" "$HOME/.claude/hooks/orca-guard.sh"   # Orca 세션에서 stage-runner·agy/grok 직접 실행 차단 훅
 
 echo "## 4. 서브에이전트 (Claude Code 전용)"
 for agent in "$REPO_DIR"/agents/*.md; do

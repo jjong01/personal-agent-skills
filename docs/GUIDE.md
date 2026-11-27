@@ -199,6 +199,7 @@ agy도 같은 `SKILL.md` 형식을 읽음(전역 `~/.gemini/config/skills/<이�
 - 방침: 위임 계열 스킬은 agy용으로 따로 만들지 않음. `SKILL.md` 안 환경별 분기나 래퍼의 agy 내부 감지는 맥락 증가·세션 충돌 위험으로 채택하지 않음.
 - 미확인: 비대화 모드(`agy -p`)에서 내장 서브에이전트 안정성, Windows Junction 링크 스킬 인식 여부.
 - Orca 작업자 안전 제한: Orca가 띄우는 agy·Grok은 `--settings`가 없어 전역 설정이 적용됨. `install.sh` 5-1절이 `lib/safety-deny.txt`(git 상태 변경·`rm -rf`·`sudo`·DB·ssh 계열 명령 접두사 단일 원본)를 agy 전역 `settings.json`(`command(...)`, `.env` 명령 regex, `~/dev` 아래 `.env` 파일 `read_file`), agy 공용 `~/.gemini/config/config.json`(`userSettings.globalPermissionGrants.deny`), Grok `~/.grok/config.toml [permission] deny`(`Bash(<접두사>*)`, `Read(**/.env)`, `Read(**/.env.*)`)에 병합함(멱등, `--dry-run` 지원). Orca agy 채팅(ACP)은 CLI `settings.json`이 아니라 `~/.gemini/config/config.json`의 `globalPermissionGrants.deny`를 따르므로 `install.sh` 5-1절이 두 곳 모두에 병합함. `run-agy.sh`도 같은 파일을 읽어 `--settings`에 넣으므로 stage-runner 경로와 Orca 경로의 제한이 같음. 새 `~/dev` 프로젝트의 `.env`는 `install.sh` 재실행으로 반영.
+- Orca 위임 강제(`extras/orca-guard.sh`): PreToolUse 훅으로 Orca 세션(`ORCA_TERMINAL_HANDLE`·`ORCA_CLI_COMMAND`) 안의 `stage-runner`·`agy`/`grok -p`·`run-agy.sh`·`run-logged.sh` 직접 실행을 차단하고 `/orchestration` 스킬의 `worker-start` 사용을 강제함. 의견 요청은 Orca 안에서는 `antigravity`·`grok` 읽기 전용 작업자를 병렬 시작해 `worker_done` 보고를 취합하고, Orca 밖에서는 `agy -p`·`grok -p`를 직접 실행함.
 
 ## 13. 정기 ping (macOS 전용, 선택)
 
