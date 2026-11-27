@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # 공통 차단 목록(safety-deny.txt)을 Orca 작업자(agy·Grok)의 전역 설정에 반영함
 # 사용:
-#   apply-safety-deny.py agy-json              agy 전역 settings에 병합할 JSON을 stdout으로 출력
-#   apply-safety-deny.py grok <config.toml> [--dry-run]   Grok [permission] deny에 없는 항목만 추가
+#   apply-safety-deny.py agy-json                             agy 전역 settings에 병합할 JSON을 stdout으로 출력함
+#   apply-safety-deny.py agy-shared <config.json> [--dry-run] agy 공용 config의 globalPermissionGrants.deny에 없는 항목만 추가함
+#   apply-safety-deny.py grok <config.toml> [--dry-run]       Grok [permission] deny에 없는 항목만 추가함
 import json, os, re, shutil, sys, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -28,9 +29,55 @@ def env_files():
                 out.append(os.path.join(root, f))
     return sorted(out)
 
+def agy_deny_list():
+    return [f"command({c})" for c in prefixes()] + [ENV_REGEX] + [f"read_file({p})" for p in env_files()]
+
 def agy_json():
-    deny = [f"command({c})" for c in prefixes()] + [ENV_REGEX] + [f"read_file({p})" for p in env_files()]
-    print(json.dumps({"permissions": {"deny": deny}}, ensure_ascii=False, indent=2))
+    print(json.dumps({"permissions": {"deny": agy_deny_list()}}, ensure_ascii=False, indent=2))
+    return 0
+
+def agy_shared(path, dry):
+    want = agy_deny_list()
+    exists = os.path.exists(path)
+    if exists:
+        with open(path, encoding="utf-8") as f:
+            text = f.read().strip()
+        data = json.loads(text) if text else {}
+    else:
+        data = {}
+    us = data.get("userSettings")
+    if not isinstance(us, dict):
+        us = {}
+        data["userSettings"] = us
+    grants = us.get("globalPermissionGrants")
+    if not isinstance(grants, dict):
+        grants = {}
+        us["globalPermissionGrants"] = grants
+    deny = grants.get("deny")
+    if not isinstance(deny, list):
+        deny = []
+        grants["deny"] = deny
+    seen = set(deny)
+    missing = []
+    for w in want:
+        if w not in seen:
+            seen.add(w)
+            missing.append(w)
+    prefix = "[dry-run] " if dry else ""
+    if dry or (exists and not missing):
+        print(f"{prefix}agy 공용 config deny 추가 {len(missing)}건")
+        return 0
+    deny.extend(missing)
+    if exists:
+        bak = f"{path}.bak-{time.strftime('%Y%m%d-%H%M%S')}"
+        shutil.copy2(path, bak)
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    os.replace(tmp, path)
+    print(f"agy 공용 config deny 추가 {len(missing)}건")
     return 0
 
 def grok(path, dry):
@@ -89,6 +136,8 @@ if __name__ == "__main__":
     dry = "--dry-run" in sys.argv
     if a[:1] == ["agy-json"]:
         sys.exit(agy_json())
+    if a[:1] == ["agy-shared"] and len(a) == 2:
+        sys.exit(agy_shared(a[1], dry))
     if a[:1] == ["grok"] and len(a) == 2:
         sys.exit(grok(a[1], dry))
-    print("usage: apply-safety-deny.py agy-json | grok <config.toml> [--dry-run]", file=sys.stderr); sys.exit(2)
+    print("usage: apply-safety-deny.py agy-json | agy-shared <config.json> [--dry-run] | grok <config.toml> [--dry-run]", file=sys.stderr); sys.exit(2)

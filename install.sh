@@ -138,6 +138,11 @@ else
   "$PY" -I "$REPO_DIR/lib/apply-safety-deny.py" agy-json > "$safety_tmp"
   "$PY" -I "$REPO_DIR/lib/merge-settings.py" "$safety_tmp" "$HOME/.gemini/antigravity-cli/settings.json" "${DRYFLAG[@]+"${DRYFLAG[@]}"}"
   rm -f "$safety_tmp"
+  if [[ -d "$HOME/.gemini" ]]; then
+    "$PY" -I "$REPO_DIR/lib/apply-safety-deny.py" agy-shared "$HOME/.gemini/config/config.json" "${DRYFLAG[@]+"${DRYFLAG[@]}"}"
+  else
+    echo "skip    ~/.gemini 없음"
+  fi
   if [[ -d "$HOME/.grok" || -x "$HOME/.grok/bin/grok" ]] || command -v grok >/dev/null 2>&1; then
     "$PY" -I "$REPO_DIR/lib/apply-safety-deny.py" grok "$HOME/.grok/config.toml" "${DRYFLAG[@]+"${DRYFLAG[@]}"}"
   else
